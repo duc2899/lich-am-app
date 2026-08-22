@@ -4,27 +4,39 @@
     "slug": "lich-am-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/images/icon.png",
     "newArchEnabled": true,
     "userInterfaceStyle": "light",
-    "ios": {
-      "supportsTablet": true
-    },
     "android": {
+      "package": "com.lichamapp",
+      "edgeToEdgeEnabled": false,
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#7A2E2E"
       },
       "predictiveBackGestureEnabled": false
     },
+    "ios": {
+      "bundleIdentifier": "com.lightd.lichamapp",
+      "supportsTablet": true
+    },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/images/favicon.png"
     },
     "scheme": "lichamapp",
     "plugins": [
       "expo-router"
-    ]
+    ],
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "backgroundColor": "#7A2E2E",
+      "resizeMode": "contain"
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "fc1e6485-95a0-40dd-af1f-da4d50cf4aec"
+      }
+    }
   }
 }

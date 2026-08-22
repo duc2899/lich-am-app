@@ -5,7 +5,7 @@ import {
   PanResponder,
   GestureResponderEvent,
 } from "react-native";
-import Svg, { Rect, Line, Text as SvgText } from "react-native-svg";
+import Svg, { Rect, Line, Circle, Text as SvgText } from "react-native-svg";
 import { DisplayNode } from "../utils/familyTreeBuilder";
 import {
   computeFamilyTreeLayout,
@@ -17,6 +17,7 @@ import { Person } from "../types/family";
 type Props = {
   root: DisplayNode;
   onPersonPress?: (personId: string) => void;
+  onAddChildPress?: (familyId: string) => void;
 };
 
 function touchDistance(touches: { pageX: number; pageY: number }[]): number {
@@ -26,7 +27,11 @@ function touchDistance(touches: { pageX: number; pageY: number }[]): number {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-export default function FamilyTreeView({ root, onPersonPress }: Props) {
+export default function FamilyTreeView({
+  root,
+  onPersonPress,
+  onAddChildPress,
+}: Props) {
   const { nodes, links, width, height } = computeFamilyTreeLayout(root);
   const xs = nodes.map((n) => n.x);
   const offsetX = -Math.min(...xs) + NODE_WIDTH / 2 + 40;
@@ -164,17 +169,41 @@ export default function FamilyTreeView({ root, onPersonPress }: Props) {
             const d = node.data;
 
             if (d.husband || d.wife) {
-              const boxW = NODE_WIDTH / 2 - 25; // trừ thêm khoảng hở giữa 2 ô
+              const boxW = NODE_WIDTH / 2 - 16; // trừ thêm khoảng hở giữa 2 ô
+              const marriageLineY = cy + NODE_HEIGHT / 2;
+              const addChildY = cy + NODE_HEIGHT + 18; // nằm dưới ô, trên đường kẻ xuống con
               return (
                 <React.Fragment key={d.id}>
+                  {/* Dây nối nhỏ thể hiện quan hệ vợ chồng, giữa 2 ô */}
                   <Line
                     x1={cx - 6}
-                    y1={cy + NODE_HEIGHT / 2}
+                    y1={marriageLineY}
                     x2={cx + 6}
-                    y2={cy + NODE_HEIGHT / 2}
+                    y2={marriageLineY}
                     stroke="#999"
                     strokeWidth={2}
                   />
+
+                  {/* Nút tròn "+" -> bấm để thêm con, đặt riêng bên dưới cặp để không đè lên ô nào */}
+                  <Circle
+                    cx={cx}
+                    cy={addChildY}
+                    r={12}
+                    fill="#4A90D9"
+                    onPress={() => onAddChildPress?.(d.id)}
+                  />
+                  <SvgText
+                    x={cx}
+                    y={addChildY + 4}
+                    fontSize={15}
+                    fontWeight="700"
+                    fill="#fff"
+                    textAnchor="middle"
+                    onPress={() => onAddChildPress?.(d.id)}
+                  >
+                    +
+                  </SvgText>
+
                   {d.husband && (
                     <PersonBox
                       x={cx - NODE_WIDTH / 2}
@@ -187,7 +216,7 @@ export default function FamilyTreeView({ root, onPersonPress }: Props) {
                   )}
                   {d.wife && (
                     <PersonBox
-                      x={cx + 12}
+                      x={cx + 20}
                       y={cy}
                       w={boxW}
                       h={NODE_HEIGHT}

@@ -17,6 +17,7 @@ import {
   EVENT_CATEGORIES,
   EventCategoryKey,
 } from "../constants/eventCategories";
+import ToggleButton from "./ToggleButton";
 
 type DateParts = { day: number; month: number; year: number };
 
@@ -181,7 +182,7 @@ export default function AddEventModal({
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="none"
       onRequestClose={onClose}
     >
       <KeyboardAvoidingView
@@ -239,12 +240,12 @@ export default function AddEventModal({
 
             <Text style={styles.label}>Loại lịch</Text>
             <View style={styles.toggleRow}>
-              <ToggleBtn
+              <ToggleButton
                 active={calendarType === "solar"}
                 label="Dương lịch"
                 onPress={() => handleToggleCalendarType("solar")}
               />
-              <ToggleBtn
+              <ToggleButton
                 active={calendarType === "lunar"}
                 label="Âm lịch"
                 onPress={() => handleToggleCalendarType("lunar")}
@@ -253,17 +254,17 @@ export default function AddEventModal({
 
             <Text style={styles.label}>Lặp lại</Text>
             <View style={styles.toggleRow}>
-              <ToggleBtn
+              <ToggleButton
                 active={repeatType === "yearly"}
                 label="Hàng năm"
                 onPress={() => setRepeatType("yearly")}
               />
-              <ToggleBtn
+              <ToggleButton
                 active={repeatType === "once"}
                 label="Chỉ 1 lần"
                 onPress={() => setRepeatType("once")}
               />
-              <ToggleBtn
+              <ToggleButton
                 active={repeatType === "none"}
                 label="Không lặp lại"
                 onPress={() => setRepeatType("none")}
@@ -322,27 +323,6 @@ export default function AddEventModal({
         </Pressable>
       </KeyboardAvoidingView>
     </Modal>
-  );
-}
-
-function ToggleBtn({
-  active,
-  label,
-  onPress,
-}: {
-  active: boolean;
-  label: string;
-  onPress: () => void;
-}) {
-  return (
-    <TouchableOpacity
-      style={[styles.toggleBtn, active && styles.toggleBtnActive]}
-      onPress={onPress}
-    >
-      <Text style={[styles.toggleText, active && styles.toggleTextActive]}>
-        {label}
-      </Text>
-    </TouchableOpacity>
   );
 }
 

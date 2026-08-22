@@ -2,26 +2,32 @@ import { useMemo, useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import FamilyTreeView from "../../components/FamilyTreeView";
 import PersonDetailModal from "../../components/PersonDetailModal";
+import AddChildModal from "../../components/AddChildModal";
+import AddSpouseModal from "../../components/AddSpouseModal";
+import EditPersonModal from "../../components/EditPersonModal";
 import { buildDisplayTree } from "../../utils/familyTreeBuilder";
 import {
   getPersonRelations,
   PersonRelations,
 } from "../../utils/familyRelations";
-import {
-  SAMPLE_PERSONS,
-  SAMPLE_FAMILIES,
-  ROOT_FAMILY_ID,
-} from "../../constants/familySampleData";
+import { useFamilyStore } from "../../store/familyStore";
 import { Person } from "../../types/family";
 
 export default function FamilyScreen() {
+  const persons = useFamilyStore((s) => s.persons);
+  const families = useFamilyStore((s) => s.families);
+  const rootFamilyId = useFamilyStore((s) => s.rootFamilyId);
+
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
   const [selectedRelations, setSelectedRelations] =
     useState<PersonRelations | null>(null);
+  const [addChildFamilyId, setAddChildFamilyId] = useState<string | null>(null);
+  const [addSpousePerson, setAddSpousePerson] = useState<Person | null>(null);
+  const [editPerson, setEditPerson] = useState<Person | null>(null);
 
   const rootNode = useMemo(
-    () => buildDisplayTree(ROOT_FAMILY_ID, SAMPLE_PERSONS, SAMPLE_FAMILIES),
-    [],
+    () => buildDisplayTree(rootFamilyId, persons, families),
+    [persons, families, rootFamilyId],
   );
 
   if (!rootNode) {
@@ -33,23 +39,62 @@ export default function FamilyScreen() {
   }
 
   const handlePersonPress = (personId: string) => {
-    const person = SAMPLE_PERSONS.find((p) => p.id === personId);
+    const person = persons.find((p) => p.id === personId);
     if (!person) return;
     setSelectedPerson(person);
-    setSelectedRelations(
-      getPersonRelations(personId, SAMPLE_PERSONS, SAMPLE_FAMILIES),
-    );
+    setSelectedRelations(getPersonRelations(personId, persons, families));
+  };
+
+  const handleAddChildPress = (familyId: string) => {
+    setAddChildFamilyId(familyId);
+  };
+
+  const handleAddSpouseFromDetail = () => {
+    // Lưu lại người đang xem trước khi đóng modal chi tiết, tránh mất data (bài học từ lỗi tương tự ở AddEventModal)
+    setAddSpousePerson(selectedPerson);
+    setSelectedPerson(null);
+  };
+
+  const handleEditFromDetail = () => {
+    setEditPerson(selectedPerson);
+    setSelectedPerson(null);
   };
 
   return (
     <View style={styles.container}>
-      <FamilyTreeView root={rootNode} onPersonPress={handlePersonPress} />
-      <Text style={styles.hint}>Chụm 2 ngón tay để zoom, kéo để di chuyển</Text>
+      <FamilyTreeView
+        root={rootNode}
+        onPersonPress={handlePersonPress}
+        onAddChildPress={handleAddChildPress}
+      />
+      <Text style={styles.hint}>
+        Chụm 2 ngón tay để zoom · Bấm nút + trên dây nối để thêm con
+      </Text>
 
       <PersonDetailModal
         person={selectedPerson}
         relations={selectedRelations}
         onClose={() => setSelectedPerson(null)}
+        onAddSpouse={handleAddSpouseFromDetail}
+        onEdit={handleEditFromDetail}
+      />
+
+      <AddChildModal
+        visible={addChildFamilyId !== null}
+        familyId={addChildFamilyId}
+        onClose={() => setAddChildFamilyId(null)}
+      />
+
+      <AddSpouseModal
+        visible={addSpousePerson !== null}
+        person={addSpousePerson}
+        onClose={() => setAddSpousePerson(null)}
+      />
+
+      <EditPersonModal
+        visible={editPerson !== null}
+        person={editPerson}
+        onClose={() => setEditPerson(null)}
       />
     </View>
   );
@@ -62,7 +107,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 16,
     alignSelf: "center",
-    fontSize: 12,
+    fontSize: 11,
     color: "#999",
     backgroundColor: "#fff",
     paddingHorizontal: 10,

@@ -46,7 +46,7 @@ export default function DayDetailModal({
     <Modal
       visible={day !== null}
       transparent
-      animationType="fade"
+      animationType="none"
       onRequestClose={onClose}
     >
       <Pressable style={styles.overlay} onPress={onClose}>
