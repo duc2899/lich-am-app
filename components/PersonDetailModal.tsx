@@ -15,6 +15,9 @@ type Props = {
   onClose: () => void;
   onAddSpouse: () => void;
   onEdit: () => void;
+  isTruong: boolean;
+  isMe: boolean;
+  onToggleMe: () => void;
 };
 
 export default function PersonDetailModal({
@@ -23,6 +26,9 @@ export default function PersonDetailModal({
   onClose,
   onAddSpouse,
   onEdit,
+  isTruong,
+  isMe,
+  onToggleMe,
 }: Props) {
   const currentYear = new Date().getFullYear();
   const isDeceased = !!person?.deathYear;
@@ -31,7 +37,7 @@ export default function PersonDetailModal({
     <Modal
       visible={person !== null}
       transparent
-      animationType="none"
+      animationType="fade"
       onRequestClose={onClose}
     >
       <Pressable style={styles.overlay} onPress={onClose}>
@@ -42,7 +48,11 @@ export default function PersonDetailModal({
                 <Text style={styles.genderIcon}>
                   {person.gender === "male" ? "♂" : "♀"}
                 </Text>
-                <Text style={styles.name}>{person.fullName}</Text>
+                <Text style={styles.name}>
+                  {isTruong ? "👑 " : ""}
+                  {person.fullName}
+                  {isMe ? "  (Tôi)" : ""}
+                </Text>
                 <TouchableOpacity style={styles.editIconBtn} onPress={onEdit}>
                   <Text style={styles.editIconText}>✏️</Text>
                 </TouchableOpacity>
@@ -123,6 +133,17 @@ export default function PersonDetailModal({
                 </TouchableOpacity>
               )}
 
+              <TouchableOpacity
+                style={[styles.meBtn, isMe && styles.meBtnActive]}
+                onPress={onToggleMe}
+              >
+                <Text
+                  style={[styles.meBtnText, isMe && styles.meBtnTextActive]}
+                >
+                  {isMe ? "✓ Đây là tôi" : "Đánh dấu đây là tôi"}
+                </Text>
+              </TouchableOpacity>
+
               <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
                 <Text style={styles.closeBtnText}>Đóng</Text>
               </TouchableOpacity>
@@ -182,6 +203,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   addSpouseBtnText: { color: "#2E8B57", fontWeight: "700", fontSize: 13 },
+  meBtn: {
+    marginTop: 10,
+    alignSelf: "flex-start",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: "#F2F2F2",
+    borderRadius: 8,
+  },
+  meBtnActive: { backgroundColor: "#2E8B57" },
+  meBtnText: { color: "#666", fontWeight: "600", fontSize: 13 },
+  meBtnTextActive: { color: "#fff" },
   closeBtn: {
     marginTop: 8,
     alignSelf: "flex-end",

@@ -18,6 +18,8 @@ type Props = {
   root: DisplayNode;
   onPersonPress?: (personId: string) => void;
   onAddChildPress?: (familyId: string) => void;
+  truongIds?: Set<string>;
+  mePersonId?: string | null;
 };
 
 function touchDistance(touches: { pageX: number; pageY: number }[]): number {
@@ -31,6 +33,8 @@ export default function FamilyTreeView({
   root,
   onPersonPress,
   onAddChildPress,
+  truongIds,
+  mePersonId,
 }: Props) {
   const { nodes, links, width, height } = computeFamilyTreeLayout(root);
   const xs = nodes.map((n) => n.x);
@@ -169,7 +173,7 @@ export default function FamilyTreeView({
             const d = node.data;
 
             if (d.husband || d.wife) {
-              const boxW = NODE_WIDTH / 2 - 16; // trừ thêm khoảng hở giữa 2 ô
+              const boxW = NODE_WIDTH / 2 - 8; // trừ thêm khoảng hở giữa 2 ô
               const marriageLineY = cy + NODE_HEIGHT / 2;
               const addChildY = cy + NODE_HEIGHT + 18; // nằm dưới ô, trên đường kẻ xuống con
               return (
@@ -211,16 +215,20 @@ export default function FamilyTreeView({
                       w={boxW}
                       h={NODE_HEIGHT}
                       person={d.husband}
+                      isTruong={truongIds?.has(d.husband.id) ?? false}
+                      isMe={mePersonId === d.husband.id}
                       onPress={() => onPersonPress?.(d.husband!.id)}
                     />
                   )}
                   {d.wife && (
                     <PersonBox
-                      x={cx + 20}
+                      x={cx + 12}
                       y={cy}
                       w={boxW}
                       h={NODE_HEIGHT}
                       person={d.wife}
+                      isTruong={truongIds?.has(d.wife.id) ?? false}
+                      isMe={mePersonId === d.wife.id}
                       onPress={() => onPersonPress?.(d.wife!.id)}
                     />
                   )}
@@ -237,6 +245,8 @@ export default function FamilyTreeView({
                   w={NODE_WIDTH / 2}
                   h={NODE_HEIGHT}
                   person={d.singlePerson}
+                  isTruong={truongIds?.has(d.singlePerson.id) ?? false}
+                  isMe={mePersonId === d.singlePerson.id}
                   onPress={() => onPersonPress?.(d.singlePerson!.id)}
                 />
               );
@@ -255,6 +265,8 @@ function PersonBox({
   w,
   h,
   person,
+  isTruong = false,
+  isMe = false,
   onPress,
 }: {
   x: number;
@@ -262,6 +274,8 @@ function PersonBox({
   w: number;
   h: number;
   person: Person;
+  isTruong?: boolean;
+  isMe?: boolean;
   onPress?: () => void;
 }) {
   const isDeceased = !!person.deathYear;
@@ -272,7 +286,9 @@ function PersonBox({
     : person.gender === "male"
       ? "#DCEBFB"
       : "#FBE3EC";
-  const stroke = person.gender === "male" ? "#4A90D9" : "#D96BA0";
+  const baseStroke = person.gender === "male" ? "#4A90D9" : "#D96BA0";
+  const stroke = isMe ? "#2E8B57" : isTruong ? "#D9A441" : baseStroke;
+  const strokeWidth = isMe || isTruong ? 3 : 1.5;
 
   // Dòng thông tin phụ: tuổi hiện tại (còn sống) hoặc hưởng thọ (đã mất)
   let infoLine = "";
@@ -295,11 +311,25 @@ function PersonBox({
         rx={10}
         fill={fill}
         stroke={stroke}
-        strokeWidth={1.5}
+        strokeWidth={strokeWidth}
         strokeDasharray={isDeceased ? "5,3" : undefined}
         opacity={isDeceased ? 0.8 : 1}
         onPress={onPress}
       />
+
+      {/* Vương miện đánh dấu trưởng, đặt ở góc trên bên trái ô */}
+      {isTruong && (
+        <SvgText
+          x={x + 14}
+          y={y + 16}
+          fontSize={16}
+          textAnchor="middle"
+          onPress={onPress}
+        >
+          👑
+        </SvgText>
+      )}
+
       <SvgText
         x={x + w / 2}
         y={y + h / 2 - 10}
@@ -323,6 +353,32 @@ function PersonBox({
         >
           {infoLine}
         </SvgText>
+      )}
+
+      {/* Nhãn "Tôi", đặt ở góc trên bên phải ô */}
+      {isMe && (
+        <>
+          <Rect
+            x={x + w - 34}
+            y={y + 4}
+            width={30}
+            height={16}
+            rx={8}
+            fill="#2E8B57"
+            onPress={onPress}
+          />
+          <SvgText
+            x={x + w - 19}
+            y={y + 15}
+            fontSize={9}
+            fontWeight="700"
+            fill="#fff"
+            textAnchor="middle"
+            onPress={onPress}
+          >
+            Tôi
+          </SvgText>
+        </>
       )}
     </>
   );

@@ -23,15 +23,18 @@ type FamilyState = {
     persons: Person[];
     families: Family[];
     rootFamilyId: string;
+    mePersonId: string | null;
     addChildToFamily: (familyId: string, data: NewPersonInput) => void;
     addSpouse: (personId: string, data: NewPersonInput) => void;
     editPerson: (personId: string, data: EditPersonInput) => void;
+    setMePersonId: (personId: string | null) => void;
 };
 
 export const useFamilyStore = create<FamilyState>((set, get) => ({
     persons: SAMPLE_PERSONS,
     families: SAMPLE_FAMILIES,
     rootFamilyId: ROOT_FAMILY_ID,
+    mePersonId: null,
 
     addChildToFamily: (familyId, data) => {
         const newPerson: Person = {
@@ -94,5 +97,9 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
                     : p
             ),
         }));
+    },
+
+    setMePersonId: (personId) => {
+        set({ mePersonId: personId });
     },
 }));

@@ -10,6 +10,7 @@ import {
   getPersonRelations,
   PersonRelations,
 } from "../../utils/familyRelations";
+import { computeTruongLineage } from "../../utils/familyLineage";
 import { useFamilyStore } from "../../store/familyStore";
 import { Person } from "../../types/family";
 
@@ -17,6 +18,8 @@ export default function FamilyScreen() {
   const persons = useFamilyStore((s) => s.persons);
   const families = useFamilyStore((s) => s.families);
   const rootFamilyId = useFamilyStore((s) => s.rootFamilyId);
+  const mePersonId = useFamilyStore((s) => s.mePersonId);
+  const setMePersonId = useFamilyStore((s) => s.setMePersonId);
 
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
   const [selectedRelations, setSelectedRelations] =
@@ -27,6 +30,11 @@ export default function FamilyScreen() {
 
   const rootNode = useMemo(
     () => buildDisplayTree(rootFamilyId, persons, families),
+    [persons, families, rootFamilyId],
+  );
+
+  const truongIds = useMemo(
+    () => new Set(computeTruongLineage(rootFamilyId, persons, families)),
     [persons, families, rootFamilyId],
   );
 
@@ -60,15 +68,22 @@ export default function FamilyScreen() {
     setSelectedPerson(null);
   };
 
+  const handleToggleMe = () => {
+    if (!selectedPerson) return;
+    setMePersonId(mePersonId === selectedPerson.id ? null : selectedPerson.id);
+  };
+
   return (
     <View style={styles.container}>
       <FamilyTreeView
         root={rootNode}
         onPersonPress={handlePersonPress}
         onAddChildPress={handleAddChildPress}
+        truongIds={truongIds}
+        mePersonId={mePersonId}
       />
       <Text style={styles.hint}>
-        Chụm 2 ngón tay để zoom · Bấm nút + trên dây nối để thêm con
+        👑 Trưởng · Chụm 2 ngón tay để zoom · Bấm + trên dây nối để thêm con
       </Text>
 
       <PersonDetailModal
@@ -77,6 +92,9 @@ export default function FamilyScreen() {
         onClose={() => setSelectedPerson(null)}
         onAddSpouse={handleAddSpouseFromDetail}
         onEdit={handleEditFromDetail}
+        isTruong={selectedPerson ? truongIds.has(selectedPerson.id) : false}
+        isMe={selectedPerson ? mePersonId === selectedPerson.id : false}
+        onToggleMe={handleToggleMe}
       />
 
       <AddChildModal
