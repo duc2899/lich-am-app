@@ -11,6 +11,7 @@ import {
   Platform,
 } from "react-native";
 import { useFamilyStore } from "../store/familyStore";
+import { useToastStore } from "../store/toastStore";
 import { Gender } from "../types/family";
 import ToggleButton from "./ToggleButton";
 
@@ -22,6 +23,7 @@ type Props = {
 
 export default function AddChildModal({ visible, familyId, onClose }: Props) {
   const addChildToFamily = useFamilyStore((s) => s.addChildToFamily);
+  const showToast = useToastStore((s) => s.showToast);
   const [fullName, setFullName] = useState("");
   const [gender, setGender] = useState<Gender>("male");
   const [birthYear, setBirthYear] = useState("");
@@ -41,11 +43,12 @@ export default function AddChildModal({ visible, familyId, onClose }: Props) {
       setError("Vui lòng nhập họ tên");
       return;
     }
+    if (!birthYear.trim()) {
+      setError("Vui lòng nhập năm sinh");
+      return;
+    }
     const y = Number(birthYear);
-    if (
-      birthYear.trim() &&
-      (!Number.isInteger(y) || y < 1900 || y > new Date().getFullYear())
-    ) {
+    if (!Number.isInteger(y) || y < 1900 || y > new Date().getFullYear()) {
       setError("Năm sinh không hợp lệ");
       return;
     }
@@ -54,8 +57,9 @@ export default function AddChildModal({ visible, familyId, onClose }: Props) {
     addChildToFamily(familyId, {
       fullName: fullName.trim(),
       gender,
-      birthYear: birthYear.trim() ? y : undefined,
+      birthYear: y,
     });
+    showToast(`Đã thêm "${fullName.trim()}" làm con`);
     onClose();
   };
 
@@ -63,7 +67,7 @@ export default function AddChildModal({ visible, familyId, onClose }: Props) {
     <Modal
       visible={visible}
       transparent
-      animationType="none"
+      animationType="slide"
       onRequestClose={onClose}
     >
       <KeyboardAvoidingView
@@ -78,7 +82,6 @@ export default function AddChildModal({ visible, familyId, onClose }: Props) {
             <TextInput
               style={styles.input}
               placeholder="Họ và tên"
-              placeholderTextColor="#999"
               value={fullName}
               onChangeText={(v) => {
                 setFullName(v);
@@ -90,23 +93,20 @@ export default function AddChildModal({ visible, familyId, onClose }: Props) {
             <View style={styles.toggleRow}>
               <ToggleButton
                 active={gender === "male"}
-                color="#4A90D9"
                 label="Nam ♂"
                 onPress={() => setGender("male")}
               />
               <ToggleButton
                 active={gender === "female"}
-                color="#D96BA0"
                 label="Nữ ♀"
                 onPress={() => setGender("female")}
               />
             </View>
 
-            <Text style={styles.label}>Năm sinh (không bắt buộc)</Text>
+            <Text style={styles.label}>Năm sinh *</Text>
             <TextInput
               style={styles.input}
               placeholder="vd: 2015"
-              placeholderTextColor="#999"
               keyboardType="number-pad"
               value={birthYear}
               onChangeText={(v) => {
@@ -157,15 +157,6 @@ const styles = StyleSheet.create({
   },
   label: { fontSize: 13, color: "#666", marginBottom: 8, fontWeight: "600" },
   toggleRow: { flexDirection: "row", gap: 8, marginBottom: 16 },
-  toggleBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: "#F2F2F2",
-  },
-  toggleBtnActive: { backgroundColor: "#4A90D9" },
-  toggleText: { fontSize: 13, color: "#666" },
-  toggleTextActive: { color: "#fff", fontWeight: "600" },
   errorText: { fontSize: 12, color: "#D9364A", marginBottom: 12 },
   actionRow: { flexDirection: "row", justifyContent: "flex-end", gap: 12 },
   cancelBtn: { paddingHorizontal: 16, paddingVertical: 10 },

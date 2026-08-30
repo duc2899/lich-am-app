@@ -29,6 +29,128 @@ function touchDistance(touches: { pageX: number; pageY: number }[]): number {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
+// Vẽ đường nối kiểu chữ Z (xuống - ngang - xuống), dùng chung cho link thường và link thủ công của multiMarriage
+function BranchLine({
+  sx,
+  sy,
+  tx,
+  ty,
+}: {
+  sx: number;
+  sy: number;
+  tx: number;
+  ty: number;
+}) {
+  const midY = sy + (ty - sy) / 2;
+  return (
+    <>
+      <Line
+        x1={sx}
+        y1={sy}
+        x2={sx}
+        y2={midY}
+        stroke="#B0B0B0"
+        strokeWidth={2}
+      />
+      <Line
+        x1={sx}
+        y1={midY}
+        x2={tx}
+        y2={midY}
+        stroke="#B0B0B0"
+        strokeWidth={2}
+      />
+      <Line
+        x1={tx}
+        y1={midY}
+        x2={tx}
+        y2={ty}
+        stroke="#B0B0B0"
+        strokeWidth={2}
+      />
+    </>
+  );
+}
+
+function AddChildButton({
+  cx,
+  cy,
+  familyId,
+  onAddChildPress,
+}: {
+  cx: number;
+  cy: number;
+  familyId: string;
+  onAddChildPress?: (familyId: string) => void;
+}) {
+  return (
+    <>
+      <Circle
+        cx={cx}
+        cy={cy}
+        r={12}
+        fill="#4A90D9"
+        onPress={() => onAddChildPress?.(familyId)}
+      />
+      <SvgText
+        x={cx}
+        y={cy + 4}
+        fontSize={15}
+        fontWeight="700"
+        fill="#fff"
+        textAnchor="middle"
+        onPress={() => onAddChildPress?.(familyId)}
+      >
+        +
+      </SvgText>
+    </>
+  );
+}
+
+// Khoảng cách từ đáy ô xuống điểm bắt đầu rẽ nhánh -- tạo 1 vùng "cuống" riêng để đặt nút,
+// tách hẳn khỏi đường ngang rẽ nhánh (tránh nút bị đường kẻ đè/cắt ngang qua như lỗi trước đó)
+const STUB_LENGTH = 34;
+const BUTTON_OFFSET_IN_STUB = 15;
+
+// Vẽ: 1 đoạn thẳng xuống (cuống) có gắn nút "+", sau đó mới rẽ nhánh (chữ Z) xuống từng con.
+// Dùng chung cho cả node 1 vợ/chồng và từng nhánh của node nhiều vợ/chồng.
+function ChildrenConnector({
+  originX,
+  originY,
+  childTargets,
+  familyId,
+  onAddChildPress,
+}: {
+  originX: number;
+  originY: number;
+  childTargets: { id: string; x: number; y: number }[];
+  familyId: string;
+  onAddChildPress?: (familyId: string) => void;
+}) {
+  const stubEndY = originY + STUB_LENGTH;
+  return (
+    <>
+      <Line
+        x1={originX}
+        y1={originY}
+        x2={originX}
+        y2={stubEndY}
+        stroke="#B0B0B0"
+        strokeWidth={2}
+      />
+      <AddChildButton
+        cx={originX}
+        cy={originY + BUTTON_OFFSET_IN_STUB}
+        familyId={familyId}
+        onAddChildPress={onAddChildPress}
+      />
+      {childTargets.map((t) => (
+        <BranchLine key={t.id} sx={originX} sy={stubEndY} tx={t.x} ty={t.y} />
+      ))}
+    </>
+  );
+}
+
 export default function FamilyTreeView({
   root,
   onPersonPress,
@@ -36,7 +158,7 @@ export default function FamilyTreeView({
   truongIds,
   mePersonId,
 }: Props) {
-  const { nodes, links, width, height } = computeFamilyTreeLayout(root);
+  const { nodes, width, height } = computeFamilyTreeLayout(root);
   const xs = nodes.map((n) => n.x);
   const offsetX = -Math.min(...xs) + NODE_WIDTH / 2 + 40;
   const offsetY = 60;
@@ -131,51 +253,96 @@ export default function FamilyTreeView({
         }}
       >
         <Svg width={width} height={height}>
-          {links.map((link, i) => {
-            const sx = link.source.x + offsetX;
-            const sy = link.source.y + offsetY + NODE_HEIGHT;
-            const tx = link.target.x + offsetX;
-            const ty = link.target.y + offsetY;
-            const midY = sy + (ty - sy) / 2;
-            return (
-              <React.Fragment key={i}>
-                <Line
-                  x1={sx}
-                  y1={sy}
-                  x2={sx}
-                  y2={midY}
-                  stroke="#B0B0B0"
-                  strokeWidth={2}
-                />
-                <Line
-                  x1={sx}
-                  y1={midY}
-                  x2={tx}
-                  y2={midY}
-                  stroke="#B0B0B0"
-                  strokeWidth={2}
-                />
-                <Line
-                  x1={tx}
-                  y1={midY}
-                  x2={tx}
-                  y2={ty}
-                  stroke="#B0B0B0"
-                  strokeWidth={2}
-                />
-              </React.Fragment>
-            );
-          })}
-
           {nodes.map((node) => {
             const cx = node.x + offsetX;
             const cy = node.y + offsetY;
             const d = node.data;
 
+            // Trường hợp 1 người có từ 2 vợ/chồng trở lên -> vẽ node trục + rẽ nhánh
+            if (d.multiMarriage) {
+              const anchor = d.multiMarriage.anchor;
+              const nodeChildren = node.children ?? [];
+              let childCursor = 0;
+
+              const branches = d.multiMarriage.marriages.map((marriage) => {
+                const count = marriage.children.length;
+                const group = nodeChildren.slice(
+                  childCursor,
+                  childCursor + count,
+                );
+                childCursor += count;
+                const groupXs = group.map((c) => c.x + offsetX);
+                const centerX =
+                  groupXs.length > 0
+                    ? (Math.min(...groupXs) + Math.max(...groupXs)) / 2
+                    : cx;
+                return { marriage, centerX, group };
+              });
+
+              const spouseBoxY = cy + NODE_HEIGHT + 15;
+
+              return (
+                <React.Fragment key={d.id}>
+                  {/* Node trục: 1 ô duy nhất cho người có nhiều vợ/chồng */}
+                  <PersonBox
+                    x={cx - NODE_WIDTH / 4}
+                    y={cy}
+                    w={NODE_WIDTH / 2}
+                    h={NODE_HEIGHT}
+                    person={anchor}
+                    isTruong={truongIds?.has(anchor.id) ?? false}
+                    isMe={mePersonId === anchor.id}
+                    onPress={() => onPersonPress?.(anchor.id)}
+                  />
+
+                  {branches.map(({ marriage, centerX, group }) => (
+                    <React.Fragment key={marriage.familyId}>
+                      {/* Đường từ node trục rẽ xuống từng vợ/chồng */}
+                      <BranchLine
+                        sx={cx}
+                        sy={cy + NODE_HEIGHT}
+                        tx={centerX}
+                        ty={spouseBoxY}
+                      />
+
+                      {marriage.spouse && (
+                        <PersonBox
+                          x={centerX - NODE_WIDTH / 4}
+                          y={spouseBoxY}
+                          w={NODE_WIDTH / 2}
+                          h={NODE_HEIGHT}
+                          person={marriage.spouse}
+                          isTruong={truongIds?.has(marriage.spouse.id) ?? false}
+                          isMe={mePersonId === marriage.spouse.id}
+                          onPress={() => onPersonPress?.(marriage.spouse!.id)}
+                        />
+                      )}
+
+                      <ChildrenConnector
+                        originX={centerX}
+                        originY={spouseBoxY + NODE_HEIGHT}
+                        childTargets={group.map((c) => ({
+                          id: c.data.id,
+                          x: c.x + offsetX,
+                          y: c.y + offsetY,
+                        }))}
+                        familyId={marriage.familyId}
+                        onAddChildPress={onAddChildPress}
+                      />
+                    </React.Fragment>
+                  ))}
+                </React.Fragment>
+              );
+            }
+
             if (d.husband || d.wife) {
               const boxW = NODE_WIDTH / 2 - 8; // trừ thêm khoảng hở giữa 2 ô
               const marriageLineY = cy + NODE_HEIGHT / 2;
-              const addChildY = cy + NODE_HEIGHT + 18; // nằm dưới ô, trên đường kẻ xuống con
+              const childTargets = (node.children ?? []).map((c) => ({
+                id: c.data.id,
+                x: c.x + offsetX,
+                y: c.y + offsetY,
+              }));
               return (
                 <React.Fragment key={d.id}>
                   {/* Dây nối nhỏ thể hiện quan hệ vợ chồng, giữa 2 ô */}
@@ -188,25 +355,13 @@ export default function FamilyTreeView({
                     strokeWidth={2}
                   />
 
-                  {/* Nút tròn "+" -> bấm để thêm con, đặt riêng bên dưới cặp để không đè lên ô nào */}
-                  <Circle
-                    cx={cx}
-                    cy={addChildY}
-                    r={12}
-                    fill="#4A90D9"
-                    onPress={() => onAddChildPress?.(d.id)}
+                  <ChildrenConnector
+                    originX={cx}
+                    originY={cy + NODE_HEIGHT}
+                    childTargets={childTargets}
+                    familyId={d.id}
+                    onAddChildPress={onAddChildPress}
                   />
-                  <SvgText
-                    x={cx}
-                    y={addChildY + 4}
-                    fontSize={15}
-                    fontWeight="700"
-                    fill="#fff"
-                    textAnchor="middle"
-                    onPress={() => onAddChildPress?.(d.id)}
-                  >
-                    +
-                  </SvgText>
 
                   {d.husband && (
                     <PersonBox
@@ -391,3 +546,4 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
 });
+

@@ -5,6 +5,8 @@ import {
   TouchableOpacity,
   Modal,
   Pressable,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { Person } from "../types/family";
 import { PersonRelations } from "../utils/familyRelations";
@@ -15,6 +17,7 @@ type Props = {
   onClose: () => void;
   onAddSpouse: () => void;
   onEdit: () => void;
+  onDelete: () => void;
   isTruong: boolean;
   isMe: boolean;
   onToggleMe: () => void;
@@ -26,6 +29,7 @@ export default function PersonDetailModal({
   onClose,
   onAddSpouse,
   onEdit,
+  onDelete,
   isTruong,
   isMe,
   onToggleMe,
@@ -40,117 +44,130 @@ export default function PersonDetailModal({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <Pressable style={styles.overlay} onPress={onClose}>
-        <Pressable style={styles.card} onPress={(e) => e.stopPropagation()}>
-          {person && (
-            <>
-              <View style={styles.header}>
-                <Text style={styles.genderIcon}>
-                  {person.gender === "male" ? "♂" : "♀"}
-                </Text>
-                <Text style={styles.name}>
-                  {isTruong ? "👑 " : ""}
-                  {person.fullName}
-                  {isMe ? "  (Tôi)" : ""}
-                </Text>
-                <TouchableOpacity style={styles.editIconBtn} onPress={onEdit}>
-                  <Text style={styles.editIconText}>✏️</Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.row}>
-                <Text style={styles.label}>Giới tính: </Text>
-                <Text style={styles.value}>
-                  {person.gender === "male" ? "Nam" : "Nữ"}
-                </Text>
-              </View>
-
-              {person.birthYear && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>Năm sinh: </Text>
-                  <Text style={styles.value}>{person.birthYear}</Text>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+      >
+        <Pressable style={styles.overlay} onPress={onClose}>
+          <Pressable style={styles.card} onPress={(e) => e.stopPropagation()}>
+            {person && (
+              <>
+                <View style={styles.header}>
+                  <Text style={styles.genderIcon}>
+                    {person.gender === "male" ? "♂" : "♀"}
+                  </Text>
+                  <Text style={styles.name}>
+                    {isTruong ? "👑 " : ""}
+                    {person.fullName}
+                    {isMe ? "  (Tôi)" : ""}
+                  </Text>
+                  <TouchableOpacity style={styles.editIconBtn} onPress={onEdit}>
+                    <Text style={styles.editIconText}>✏️</Text>
+                  </TouchableOpacity>
                 </View>
-              )}
 
-              <View style={styles.row}>
-                <Text style={styles.label}>Tình trạng: </Text>
-                {isDeceased ? (
-                  <Text style={[styles.value, styles.deceasedText]}>
-                    Đã mất{person.deathYear ? ` (${person.deathYear})` : ""}
-                    {person.birthYear && person.deathYear
-                      ? ` · Hưởng thọ ${person.deathYear - person.birthYear} tuổi`
-                      : ""}
-                  </Text>
-                ) : (
+                <View style={styles.row}>
+                  <Text style={styles.label}>Giới tính: </Text>
                   <Text style={styles.value}>
-                    Còn sống
-                    {person.birthYear
-                      ? ` · ${currentYear - person.birthYear} tuổi`
-                      : ""}
+                    {person.gender === "male" ? "Nam" : "Nữ"}
                   </Text>
+                </View>
+
+                {person.birthYear && (
+                  <View style={styles.row}>
+                    <Text style={styles.label}>Năm sinh: </Text>
+                    <Text style={styles.value}>{person.birthYear}</Text>
+                  </View>
                 )}
-              </View>
 
-              {relations && (relations.father || relations.mother) && (
                 <View style={styles.row}>
-                  <Text style={styles.label}>Cha mẹ: </Text>
-                  <Text style={styles.value}>
-                    {[relations.father?.fullName, relations.mother?.fullName]
-                      .filter(Boolean)
-                      .join(" & ")}
-                  </Text>
+                  <Text style={styles.label}>Tình trạng: </Text>
+                  {isDeceased ? (
+                    <Text style={[styles.value, styles.deceasedText]}>
+                      Đã mất{person.deathYear ? ` (${person.deathYear})` : ""}
+                      {person.birthYear && person.deathYear
+                        ? ` · Hưởng thọ ${person.deathYear - person.birthYear} tuổi`
+                        : ""}
+                    </Text>
+                  ) : (
+                    <Text style={styles.value}>
+                      Còn sống
+                      {person.birthYear
+                        ? ` · ${currentYear - person.birthYear} tuổi`
+                        : ""}
+                    </Text>
+                  )}
                 </View>
-              )}
 
-              {relations && relations.spouses.length > 0 && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>
-                    {person.gender === "male" ? "Vợ: " : "Chồng: "}
-                  </Text>
-                  <Text style={styles.value}>
-                    {relations.spouses.map((s) => s.fullName).join(", ")}
-                  </Text>
-                </View>
-              )}
+                {relations && (relations.father || relations.mother) && (
+                  <View style={styles.row}>
+                    <Text style={styles.label}>Cha mẹ: </Text>
+                    <Text style={styles.value}>
+                      {[relations.father?.fullName, relations.mother?.fullName]
+                        .filter(Boolean)
+                        .join(" & ")}
+                    </Text>
+                  </View>
+                )}
 
-              {relations && relations.children.length > 0 && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>
-                    Con ({relations.children.length}):{" "}
-                  </Text>
-                  <Text style={styles.value}>
-                    {relations.children.map((c) => c.fullName).join(", ")}
-                  </Text>
-                </View>
-              )}
+                {relations && relations.spouses.length > 0 && (
+                  <View style={styles.row}>
+                    <Text style={styles.label}>
+                      {person.gender === "male" ? "Vợ: " : "Chồng: "}
+                    </Text>
+                    <Text style={styles.value}>
+                      {relations.spouses.map((s) => s.fullName).join(", ")}
+                    </Text>
+                  </View>
+                )}
 
-              {relations && relations.spouses.length === 0 && (
+                {relations && relations.children.length > 0 && (
+                  <View style={styles.row}>
+                    <Text style={styles.label}>
+                      Con ({relations.children.length}):{" "}
+                    </Text>
+                    <Text style={styles.value}>
+                      {relations.children.map((c) => c.fullName).join(", ")}
+                    </Text>
+                  </View>
+                )}
+
                 <TouchableOpacity
                   style={styles.addSpouseBtn}
                   onPress={onAddSpouse}
                 >
-                  <Text style={styles.addSpouseBtnText}>+ Thêm vợ/chồng</Text>
+                  <Text style={styles.addSpouseBtnText}>
+                    {relations && relations.spouses.length > 0
+                      ? "+ Thêm vợ/chồng khác"
+                      : "+ Thêm vợ/chồng"}
+                  </Text>
                 </TouchableOpacity>
-              )}
 
-              <TouchableOpacity
-                style={[styles.meBtn, isMe && styles.meBtnActive]}
-                onPress={onToggleMe}
-              >
-                <Text
-                  style={[styles.meBtnText, isMe && styles.meBtnTextActive]}
+                <TouchableOpacity
+                  style={[styles.meBtn, isMe && styles.meBtnActive]}
+                  onPress={onToggleMe}
                 >
-                  {isMe ? "✓ Đây là tôi" : "Đánh dấu đây là tôi"}
-                </Text>
-              </TouchableOpacity>
+                  <Text
+                    style={[styles.meBtnText, isMe && styles.meBtnTextActive]}
+                  >
+                    {isMe ? "✓ Đây là tôi" : "Đánh dấu đây là tôi"}
+                  </Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-                <Text style={styles.closeBtnText}>Đóng</Text>
-              </TouchableOpacity>
-            </>
-          )}
+                <View style={styles.bottomRow}>
+                  <TouchableOpacity style={styles.deleteBtn} onPress={onDelete}>
+                    <Text style={styles.deleteBtnText}>🗑️ Xoá</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
+                    <Text style={styles.closeBtnText}>Đóng</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </Pressable>
         </Pressable>
-      </Pressable>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -214,9 +231,20 @@ const styles = StyleSheet.create({
   meBtnActive: { backgroundColor: "#2E8B57" },
   meBtnText: { color: "#666", fontWeight: "600", fontSize: 13 },
   meBtnTextActive: { color: "#fff" },
+  bottomRow: {
+    marginTop: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  deleteBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: "#FDEDEE",
+    borderRadius: 8,
+  },
+  deleteBtnText: { color: "#D9364A", fontWeight: "700", fontSize: 13 },
   closeBtn: {
-    marginTop: 8,
-    alignSelf: "flex-end",
     paddingHorizontal: 16,
     paddingVertical: 8,
     backgroundColor: "#4A90D9",

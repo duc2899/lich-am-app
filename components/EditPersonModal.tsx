@@ -11,6 +11,7 @@ import {
   Platform,
 } from "react-native";
 import { useFamilyStore } from "../store/familyStore";
+import { useToastStore } from "../store/toastStore";
 import { Gender, Person } from "../types/family";
 import ToggleButton from "./ToggleButton";
 
@@ -22,6 +23,7 @@ type Props = {
 
 export default function EditPersonModal({ visible, person, onClose }: Props) {
   const editPerson = useFamilyStore((s) => s.editPerson);
+  const showToast = useToastStore((s) => s.showToast);
   const [fullName, setFullName] = useState("");
   const [gender, setGender] = useState<Gender>("male");
   const [birthYear, setBirthYear] = useState("");
@@ -85,6 +87,7 @@ export default function EditPersonModal({ visible, person, onClose }: Props) {
       birthYear: birthYear.trim() ? Number(birthYear) : undefined,
       deathYear: isDeceased && deathYear.trim() ? Number(deathYear) : undefined,
     });
+    showToast("Đã cập nhật thông tin");
     onClose();
   };
 
@@ -92,7 +95,7 @@ export default function EditPersonModal({ visible, person, onClose }: Props) {
     <Modal
       visible={visible}
       transparent
-      animationType="none"
+      animationType="slide"
       onRequestClose={onClose}
     >
       <KeyboardAvoidingView
@@ -102,7 +105,7 @@ export default function EditPersonModal({ visible, person, onClose }: Props) {
       >
         <Pressable style={styles.overlay} onPress={onClose}>
           <Pressable style={styles.card} onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.heading}> Sửa thông tin </Text>
+            <Text style={styles.heading}>Sửa thông tin</Text>
 
             <TextInput
               style={styles.input}
@@ -114,7 +117,7 @@ export default function EditPersonModal({ visible, person, onClose }: Props) {
               }}
             />
 
-            <Text style={styles.label}> Giới tính </Text>
+            <Text style={styles.label}>Giới tính</Text>
             <View style={styles.toggleRow}>
               <ToggleButton
                 active={gender === "male"}
@@ -128,7 +131,7 @@ export default function EditPersonModal({ visible, person, onClose }: Props) {
               />
             </View>
 
-            <Text style={styles.label}> Năm sinh(không bắt buộc) </Text>
+            <Text style={styles.label}>Năm sinh (không bắt buộc)</Text>
             <TextInput
               style={styles.input}
               placeholder="vd: 1975"
@@ -140,7 +143,7 @@ export default function EditPersonModal({ visible, person, onClose }: Props) {
               }}
             />
 
-            <Text style={styles.label}> Tình trạng </Text>
+            <Text style={styles.label}>Tình trạng</Text>
             <View style={styles.toggleRow}>
               <ToggleButton
                 active={!isDeceased}
@@ -157,7 +160,7 @@ export default function EditPersonModal({ visible, person, onClose }: Props) {
 
             {isDeceased && (
               <>
-                <Text style={styles.label}> Năm mất </Text>
+                <Text style={styles.label}>Năm mất</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="vd: 2020"
@@ -171,14 +174,14 @@ export default function EditPersonModal({ visible, person, onClose }: Props) {
               </>
             )}
 
-            {error !== "" && <Text style={styles.errorText}> {error} </Text>}
+            {error !== "" && <Text style={styles.errorText}>{error}</Text>}
 
             <View style={styles.actionRow}>
               <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
-                <Text style={styles.cancelText}> Huỷ </Text>
+                <Text style={styles.cancelText}>Huỷ</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-                <Text style={styles.saveText}> Lưu </Text>
+                <Text style={styles.saveText}>Lưu</Text>
               </TouchableOpacity>
             </View>
           </Pressable>

@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Alert } from "react-native";
 import FamilyTreeView from "../../components/FamilyTreeView";
 import PersonDetailModal from "../../components/PersonDetailModal";
 import AddChildModal from "../../components/AddChildModal";
 import AddSpouseModal from "../../components/AddSpouseModal";
 import EditPersonModal from "../../components/EditPersonModal";
+import FamilyLegend from "../../components/FamilyLegend";
+import FamilyStartScreen from "../../components/FamilyStartScreen";
 import { buildDisplayTree } from "../../utils/familyTreeBuilder";
 import {
   getPersonRelations,
@@ -12,14 +14,17 @@ import {
 } from "../../utils/familyRelations";
 import { computeTruongLineage } from "../../utils/familyLineage";
 import { useFamilyStore } from "../../store/familyStore";
+import { useToastStore } from "../../store/toastStore";
 import { Person } from "../../types/family";
 
 export default function FamilyScreen() {
   const persons = useFamilyStore((s) => s.persons);
   const families = useFamilyStore((s) => s.families);
-  const rootFamilyId = useFamilyStore((s) => s.rootFamilyId);
+  const rootPersonId = useFamilyStore((s) => s.rootPersonId);
   const mePersonId = useFamilyStore((s) => s.mePersonId);
   const setMePersonId = useFamilyStore((s) => s.setMePersonId);
+  const deletePerson = useFamilyStore((s) => s.deletePerson);
+  const showToast = useToastStore((s) => s.showToast);
 
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
   const [selectedRelations, setSelectedRelations] =
@@ -29,21 +34,24 @@ export default function FamilyScreen() {
   const [editPerson, setEditPerson] = useState<Person | null>(null);
 
   const rootNode = useMemo(
-    () => buildDisplayTree(rootFamilyId, persons, families),
-    [persons, families, rootFamilyId],
+    () =>
+      rootPersonId ? buildDisplayTree(rootPersonId, persons, families) : null,
+    [persons, families, rootPersonId],
   );
 
   const truongIds = useMemo(
-    () => new Set(computeTruongLineage(rootFamilyId, persons, families)),
-    [persons, families, rootFamilyId],
+    () =>
+      new Set(
+        rootPersonId
+          ? computeTruongLineage(rootPersonId, persons, families)
+          : [],
+      ),
+    [persons, families, rootPersonId],
   );
 
-  if (!rootNode) {
-    return (
-      <View style={styles.center}>
-        <Text>Chưa có dữ liệu gia phả</Text>
-      </View>
-    );
+  // Chưa có dữ liệu -> hiện màn hình bắt đầu để tự nhập người đầu tiên
+  if (!rootPersonId || !rootNode) {
+    return <FamilyStartScreen />;
   }
 
   const handlePersonPress = (personId: string) => {
@@ -70,7 +78,39 @@ export default function FamilyScreen() {
 
   const handleToggleMe = () => {
     if (!selectedPerson) return;
-    setMePersonId(mePersonId === selectedPerson.id ? null : selectedPerson.id);
+    const willBeMe = mePersonId !== selectedPerson.id;
+    setMePersonId(willBeMe ? selectedPerson.id : null);
+    showToast(
+      willBeMe
+        ? `Đã đánh dấu "${selectedPerson.fullName}" là bạn`
+        : "Đã bỏ đánh dấu",
+    );
+  };
+
+  const handleDelete = () => {
+    if (!selectedPerson) return;
+    const hasChildren =
+      selectedRelations && selectedRelations.children.length > 0;
+    const nameToDelete = selectedPerson.fullName;
+    Alert.alert(
+      "Xoá người này?",
+      `Xoá "${selectedPerson.fullName}" khỏi gia phả. Hành động này không thể hoàn tác.` +
+        (hasChildren
+          ? " ⚠️ Người này đang có con — TOÀN BỘ con, cháu, chắt... của họ cũng sẽ bị xoá theo."
+          : ""),
+      [
+        { text: "Huỷ", style: "cancel" },
+        {
+          text: "Xoá",
+          style: "destructive",
+          onPress: () => {
+            deletePerson(selectedPerson.id);
+            setSelectedPerson(null);
+            showToast(`Đã xoá "${nameToDelete}"`);
+          },
+        },
+      ],
+    );
   };
 
   return (
@@ -82,8 +122,9 @@ export default function FamilyScreen() {
         truongIds={truongIds}
         mePersonId={mePersonId}
       />
+      <FamilyLegend />
       <Text style={styles.hint}>
-        👑 Trưởng · Chụm 2 ngón tay để zoom · Bấm + trên dây nối để thêm con
+        Chụm 2 ngón tay để zoom · Bấm + trên dây nối để thêm con
       </Text>
 
       <PersonDetailModal
@@ -92,6 +133,7 @@ export default function FamilyScreen() {
         onClose={() => setSelectedPerson(null)}
         onAddSpouse={handleAddSpouseFromDetail}
         onEdit={handleEditFromDetail}
+        onDelete={handleDelete}
         isTruong={selectedPerson ? truongIds.has(selectedPerson.id) : false}
         isMe={selectedPerson ? mePersonId === selectedPerson.id : false}
         onToggleMe={handleToggleMe}
