@@ -158,6 +158,8 @@ export default function FamilyTreeView({
   truongIds,
   mePersonId,
 }: Props) {
+  // Nhờ getNodeChildren() đã chèn placeholder cho nhánh rỗng, d3 giờ tự biết đủ toàn bộ
+  // nhánh (kể cả chưa có con) và tự tính width/vị trí chính xác -- không cần patch tay nữa.
   const { nodes, width, height } = computeFamilyTreeLayout(root);
   const xs = nodes.map((n) => n.x);
   const offsetX = -Math.min(...xs) + NODE_WIDTH / 2 + 40;
@@ -258,6 +260,9 @@ export default function FamilyTreeView({
             const cy = node.y + offsetY;
             const d = node.data;
 
+            // Node ảo (đại diện cho nhánh hôn nhân chưa có con, chỉ để d3 tính vị trí) -> không vẽ gì
+            if (d.isPlaceholder) return null;
+
             // Trường hợp 1 người có từ 2 vợ/chồng trở lên -> vẽ node trục + rẽ nhánh
             if (d.multiMarriage) {
               const anchor = d.multiMarriage.anchor;
@@ -265,18 +270,25 @@ export default function FamilyTreeView({
               let childCursor = 0;
 
               const branches = d.multiMarriage.marriages.map((marriage) => {
-                const count = marriage.children.length;
+                // Nhánh có con thật: lấy đúng số con. Nhánh rỗng: lấy đúng 1 placeholder
+                // (do getNodeChildren() chèn vào) -- d3 đã tự tính vị trí hợp lý cho nó,
+                // không còn cần công thức tự chế nào ở đây nữa.
+                const count =
+                  marriage.children.length > 0 ? marriage.children.length : 1;
                 const group = nodeChildren.slice(
                   childCursor,
                   childCursor + count,
                 );
                 childCursor += count;
+
                 const groupXs = group.map((c) => c.x + offsetX);
                 const centerX =
-                  groupXs.length > 0
-                    ? (Math.min(...groupXs) + Math.max(...groupXs)) / 2
-                    : cx;
-                return { marriage, centerX, group };
+                  (Math.min(...groupXs) + Math.max(...groupXs)) / 2;
+
+                // Placeholder không phải con thật -> loại khỏi danh sách để không vẽ nhầm
+                const realChildren = group.filter((c) => !c.data.isPlaceholder);
+
+                return { marriage, centerX, group: realChildren };
               });
 
               const spouseBoxY = cy + NODE_HEIGHT + 15;
@@ -546,4 +558,3 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
 });
-

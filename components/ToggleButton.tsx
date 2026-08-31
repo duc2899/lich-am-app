@@ -1,24 +1,33 @@
 import { TouchableOpacity, Text, StyleSheet } from "react-native";
+import { useTheme } from "../context/ThemeContext";
 
 type Props = {
   active: boolean;
   label: string;
   onPress: () => void;
-  color?: string; // màu nền khi active, mặc định xanh dương
+  color?: string; // màu nền khi active, mặc định lấy theo theme.primary
 };
 
-export default function ToggleButton({
-  active,
-  label,
-  onPress,
-  color = "#4A90D9",
-}: Props) {
+export default function ToggleButton({ active, label, onPress, color }: Props) {
+  const { colors } = useTheme();
+  const activeColor = color ?? colors.primary;
+
   return (
     <TouchableOpacity
-      style={[styles.toggleBtn, active && { backgroundColor: color }]}
+      style={[
+        styles.toggleBtn,
+        { backgroundColor: colors.background },
+        active && { backgroundColor: activeColor },
+      ]}
       onPress={onPress}
     >
-      <Text style={[styles.toggleText, active && styles.toggleTextActive]}>
+      <Text
+        style={[
+          styles.toggleText,
+          { color: colors.textSecondary },
+          active && styles.toggleTextActive,
+        ]}
+      >
         {label}
       </Text>
     </TouchableOpacity>
@@ -26,12 +35,7 @@ export default function ToggleButton({
 }
 
 const styles = StyleSheet.create({
-  toggleBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: "#F2F2F2",
-  },
-  toggleText: { fontSize: 13, color: "#666" },
+  toggleBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20 },
+  toggleText: { fontSize: 13 },
   toggleTextActive: { color: "#fff", fontWeight: "600" },
 });

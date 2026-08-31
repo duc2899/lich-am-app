@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { EventCategoryKey } from "../constants/eventCategories";
 
 export type CalendarType = "solar" | "lunar";
-export type RepeatType = "yearly" | "once" | "none";
+export type RepeatType = "yearly" | "once";
 
 export type EventItem = {
   id: string;
@@ -20,6 +20,7 @@ type EventState = {
   events: EventItem[];
   addEvent: (event: Omit<EventItem, "id">) => void;
   removeEvent: (id: string) => void;
+  clearAllEvents: () => void;
 };
 
 export const useEventStore = create<EventState>((set) => ({
@@ -30,4 +31,5 @@ export const useEventStore = create<EventState>((set) => ({
     })),
   removeEvent: (id) =>
     set((state) => ({ events: state.events.filter((e) => e.id !== id) })),
+  clearAllEvents: () => set({ events: [] }),
 }));

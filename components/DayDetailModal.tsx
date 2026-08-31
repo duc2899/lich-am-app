@@ -14,6 +14,7 @@ import {
 } from "../constants/lunar";
 import { getCategoryByKey } from "../constants/eventCategories";
 import { EventItem } from "../store/eventStore";
+import { useTheme } from "../context/ThemeContext";
 
 export type DayInfo = {
   date: number;
@@ -42,6 +43,8 @@ export default function DayDetailModal({
   onClose,
   onAddEvent,
 }: Props) {
+  const { colors } = useTheme();
+
   return (
     <Modal
       visible={day !== null}
@@ -50,20 +53,27 @@ export default function DayDetailModal({
       onRequestClose={onClose}
     >
       <Pressable style={styles.overlay} onPress={onClose}>
-        <Pressable style={styles.card} onPress={(e) => e.stopPropagation()}>
+        <Pressable
+          style={[styles.card, { backgroundColor: colors.surface }]}
+          onPress={(e) => e.stopPropagation()}
+        >
           {day && (
             <>
               <View style={styles.row}>
-                <Text style={styles.icon}>✦</Text>
-                <Text style={styles.label}>Ngày Dương Lịch: </Text>
+                <Text style={[styles.icon, { color: colors.primary }]}>✦</Text>
+                <Text style={[styles.label, { color: colors.text }]}>
+                  Ngày Dương Lịch:{" "}
+                </Text>
                 <Text style={styles.valueOrange}>
                   {day.date}-{month}-{year}
                 </Text>
               </View>
 
               <View style={styles.row}>
-                <Text style={styles.icon}>✦</Text>
-                <Text style={styles.label}>Ngày Âm Lịch: </Text>
+                <Text style={[styles.icon, { color: colors.primary }]}>✦</Text>
+                <Text style={[styles.label, { color: colors.text }]}>
+                  Ngày Âm Lịch:{" "}
+                </Text>
                 <Text style={styles.valueGreen}>
                   {day.lunarDay}-{day.lunarMonth}
                   {day.isLeapMonth ? " (nhuận)" : ""}-{day.lunarYear}
@@ -71,22 +81,32 @@ export default function DayDetailModal({
               </View>
 
               <View style={styles.row}>
-                <Text style={styles.icon}>✦</Text>
-                <Text style={styles.label}>Ngày trong tuần: </Text>
-                <Text style={styles.valueBold}>
+                <Text style={[styles.icon, { color: colors.primary }]}>✦</Text>
+                <Text style={[styles.label, { color: colors.text }]}>
+                  Ngày trong tuần:{" "}
+                </Text>
+                <Text style={[styles.valueBold, { color: colors.text }]}>
                   {getWeekdayName(day.date, month, year)}
                 </Text>
               </View>
 
               <View style={styles.row}>
-                <Text style={styles.icon}>✦</Text>
-                <Text style={styles.label}>Ngày </Text>
+                <Text style={[styles.icon, { color: colors.primary }]}>✦</Text>
+                <Text style={[styles.label, { color: colors.text }]}>
+                  Ngày{" "}
+                </Text>
                 <Text style={styles.valueBold}>{getDayCanChi(day.jd)}</Text>
-                <Text style={styles.label}> tháng </Text>
+                <Text style={[styles.label, { color: colors.text }]}>
+                  {" "}
+                  tháng{" "}
+                </Text>
                 <Text style={styles.valueBold}>
                   {getMonthCanChi(day.lunarMonth, day.lunarYear)}
                 </Text>
-                <Text style={styles.label}> năm </Text>
+                <Text style={[styles.label, { color: colors.text }]}>
+                  {" "}
+                  năm{" "}
+                </Text>
                 <Text style={styles.valueBold}>
                   {getYearCanChi(day.lunarYear)}
                 </Text>

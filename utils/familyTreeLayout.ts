@@ -8,20 +8,30 @@ export const GAP_Y = 180; // khoảng cách dọc giữa các tầng thế hệ 
 
 export type LayoutResult = {
   nodes: HierarchyPointNode<DisplayNode>[];
-  links: {
-    source: HierarchyPointNode<DisplayNode>;
-    target: HierarchyPointNode<DisplayNode>;
-  }[];
+  links: { source: HierarchyPointNode<DisplayNode>; target: HierarchyPointNode<DisplayNode> }[];
   width: number;
   height: number;
 };
+
+// "Nửa chiều rộng" thực tế của 1 node, tính theo đơn vị node chuẩn.
+// Node bình thường (1 vợ/chồng hoặc độc thân) = 0.5. Node nhiều vợ/chồng cần rộng hơn
+// để đủ chỗ rẽ nhánh, nên nửa chiều rộng tăng theo số cuộc hôn nhân.
+function getHalfWidthUnits(node: { data: DisplayNode }): number {
+  const marriageCount = node.data.multiMarriage?.marriages.length;
+  return marriageCount ? marriageCount / 2 : 0.5;
+}
 
 export function computeFamilyTreeLayout(root: DisplayNode): LayoutResult {
   const rootHierarchy = hierarchy(root, getNodeChildren);
   const treeLayout = tree<DisplayNode>()
     .nodeSize([NODE_WIDTH + GAP_X, NODE_HEIGHT + GAP_Y])
-    // Node cùng cha đứng sát nhau hơn (1x), node khác cha cách xa hơn 1 chút (1.3x) để phân biệt rõ nhánh
-    .separation((a, b) => (a.parent === b.parent ? 1 : 1.3));
+    .separation((a, b) => {
+      // Tổng "nửa chiều rộng" của 2 node cạnh nhau quyết định khoảng cách cần có giữa chúng
+      // -- node càng nhiều vợ/chồng càng cần nhiều khoảng trống xung quanh để không lấn sang
+      // node bên cạnh. Mặc định d3 dùng hằng số 1/2, ở đây thay bằng giá trị tính theo thực tế.
+      const base = getHalfWidthUnits(a) + getHalfWidthUnits(b);
+      return a.parent === b.parent ? base : base + 0.3;
+    });
   const positioned = treeLayout(rootHierarchy);
 
   const nodes = positioned.descendants();

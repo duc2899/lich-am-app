@@ -18,6 +18,7 @@ import {
   EventCategoryKey,
 } from "../constants/eventCategories";
 import ToggleButton from "./ToggleButton";
+import { useTheme } from "../context/ThemeContext";
 
 type DateParts = { day: number; month: number; year: number };
 
@@ -35,6 +36,7 @@ export default function AddEventModal({
   initialSolar,
   initialLunar,
 }: Props) {
+  const { colors } = useTheme();
   const addEvent = useEventStore((s) => s.addEvent);
   const today = new Date();
   const fallbackSolar: DateParts = {
@@ -182,7 +184,7 @@ export default function AddEventModal({
     <Modal
       visible={visible}
       transparent
-      animationType="none"
+      animationType="slide"
       onRequestClose={onClose}
     >
       <KeyboardAvoidingView
@@ -191,13 +193,26 @@ export default function AddEventModal({
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
         <Pressable style={styles.overlay} onPress={onClose}>
-          <Pressable style={styles.card} onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.heading}>Thêm sự kiện</Text>
+          <Pressable
+            style={[styles.card, { backgroundColor: colors.surface }]}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <Text style={[styles.heading, { color: colors.text }]}>
+              Thêm sự kiện
+            </Text>
 
             <TextInput
-              style={[styles.input, errors.title && styles.inputError]}
+              style={[
+                styles.input,
+                {
+                  borderColor: colors.border,
+                  color: colors.text,
+                  backgroundColor: colors.surface,
+                },
+                errors.title && { borderColor: colors.danger },
+              ]}
               placeholder="Tên sự kiện (vd: Sinh nhật mẹ)"
-              placeholderTextColor="#999"
+              placeholderTextColor={colors.textSecondary}
               value={title}
               onChangeText={(v) => {
                 setTitle(v);
@@ -206,10 +221,14 @@ export default function AddEventModal({
               }}
             />
             {errors.title && (
-              <Text style={styles.errorText}>{errors.title}</Text>
+              <Text style={[styles.errorText, { color: colors.danger }]}>
+                {errors.title}
+              </Text>
             )}
 
-            <Text style={styles.label}>Loại sự kiện</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>
+              Loại sự kiện
+            </Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -221,7 +240,8 @@ export default function AddEventModal({
                   key={c.key}
                   style={[
                     styles.categoryChip,
-                    category === c.key && styles.categoryChipActive,
+                    { backgroundColor: colors.background },
+                    category === c.key && { backgroundColor: colors.primary },
                   ]}
                   onPress={() => setCategory(c.key)}
                 >
@@ -229,6 +249,7 @@ export default function AddEventModal({
                   <Text
                     style={[
                       styles.categoryLabel,
+                      { color: colors.textSecondary },
                       category === c.key && styles.categoryLabelActive,
                     ]}
                   >
@@ -238,7 +259,9 @@ export default function AddEventModal({
               ))}
             </ScrollView>
 
-            <Text style={styles.label}>Loại lịch</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>
+              Loại lịch
+            </Text>
             <View style={styles.toggleRow}>
               <ToggleButton
                 active={calendarType === "solar"}
@@ -252,7 +275,9 @@ export default function AddEventModal({
               />
             </View>
 
-            <Text style={styles.label}>Lặp lại</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>
+              Lặp lại
+            </Text>
             <View style={styles.toggleRow}>
               <ToggleButton
                 active={repeatType === "yearly"}
@@ -264,19 +289,22 @@ export default function AddEventModal({
                 label="Chỉ 1 lần"
                 onPress={() => setRepeatType("once")}
               />
-              <ToggleButton
-                active={repeatType === "none"}
-                label="Không lặp lại"
-                onPress={() => setRepeatType("none")}
-              />
             </View>
 
-            <Text style={styles.label}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>
               Ngày / Tháng / Năm ({calendarType === "lunar" ? "âm" : "dương"})
             </Text>
             <View style={styles.dateRow}>
               <TextInput
-                style={[styles.dateInput, errors.day && styles.inputError]}
+                style={[
+                  styles.dateInput,
+                  {
+                    borderColor: colors.border,
+                    color: colors.text,
+                    backgroundColor: colors.surface,
+                  },
+                  errors.day && { borderColor: colors.danger },
+                ]}
                 keyboardType="number-pad"
                 value={day}
                 onChangeText={(v) => {
@@ -285,7 +313,15 @@ export default function AddEventModal({
                 }}
               />
               <TextInput
-                style={[styles.dateInput, errors.month && styles.inputError]}
+                style={[
+                  styles.dateInput,
+                  {
+                    borderColor: colors.border,
+                    color: colors.text,
+                    backgroundColor: colors.surface,
+                  },
+                  errors.month && { borderColor: colors.danger },
+                ]}
                 keyboardType="number-pad"
                 value={month}
                 onChangeText={(v) => {
@@ -295,7 +331,15 @@ export default function AddEventModal({
                 }}
               />
               <TextInput
-                style={[styles.dateInput, errors.year && styles.inputError]}
+                style={[
+                  styles.dateInput,
+                  {
+                    borderColor: colors.border,
+                    color: colors.text,
+                    backgroundColor: colors.surface,
+                  },
+                  errors.year && { borderColor: colors.danger },
+                ]}
                 keyboardType="number-pad"
                 value={year}
                 onChangeText={(v) => {
@@ -306,16 +350,23 @@ export default function AddEventModal({
               />
             </View>
             {(errors.day || errors.month || errors.year) && (
-              <Text style={styles.errorText}>
+              <Text style={[styles.errorText, { color: colors.danger }]}>
                 {errors.day || errors.month || errors.year}
               </Text>
             )}
 
             <View style={styles.actionRow}>
               <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
-                <Text style={styles.cancelText}>Huỷ</Text>
+                <Text
+                  style={[styles.cancelText, { color: colors.textSecondary }]}
+                >
+                  Huỷ
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
+              <TouchableOpacity
+                style={[styles.saveBtn, { backgroundColor: colors.primary }]}
+                onPress={handleSave}
+              >
                 <Text style={styles.saveText}>Lưu</Text>
               </TouchableOpacity>
             </View>
@@ -332,26 +383,17 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "flex-end",
   },
-  card: {
-    backgroundColor: "#fff",
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    padding: 20,
-  },
+  card: { borderTopLeftRadius: 16, borderTopRightRadius: 16, padding: 20 },
   heading: { fontSize: 18, fontWeight: "700", marginBottom: 16 },
   input: {
     borderWidth: 1,
-    borderColor: "#ddd",
     borderRadius: 8,
     padding: 10,
     marginBottom: 4,
     fontSize: 14,
-    color: "#222",
-    backgroundColor: "#fff",
   },
-  inputError: { borderColor: "#D9364A" },
-  errorText: { fontSize: 12, color: "#D9364A", marginBottom: 12 },
-  label: { fontSize: 13, color: "#666", marginBottom: 8, fontWeight: "600" },
+  errorText: { fontSize: 12, marginBottom: 12 },
+  label: { fontSize: 13, marginBottom: 8, fontWeight: "600" },
   categoryScroll: { marginBottom: 16 },
   categoryScrollContent: { gap: 10, paddingRight: 4 },
   categoryChip: {
@@ -360,42 +402,23 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: 12,
-    backgroundColor: "#F2F2F2",
     minWidth: 70,
   },
-  categoryChipActive: { backgroundColor: "#4A90D9" },
   categoryIcon: { fontSize: 22, marginBottom: 4 },
-  categoryLabel: { fontSize: 11, color: "#666", fontWeight: "600" },
+  categoryLabel: { fontSize: 11, fontWeight: "600" },
   categoryLabelActive: { color: "#fff" },
   toggleRow: { flexDirection: "row", gap: 8, marginBottom: 16 },
-  toggleBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: "#F2F2F2",
-  },
-  toggleBtnActive: { backgroundColor: "#4A90D9" },
-  toggleText: { fontSize: 13, color: "#666" },
-  toggleTextActive: { color: "#fff", fontWeight: "600" },
   dateRow: { flexDirection: "row", gap: 8, marginBottom: 20 },
   dateInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#ddd",
     borderRadius: 8,
     padding: 10,
     textAlign: "center",
-    color: "#222",
-    backgroundColor: "#fff",
   },
   actionRow: { flexDirection: "row", justifyContent: "flex-end", gap: 12 },
   cancelBtn: { paddingHorizontal: 16, paddingVertical: 10 },
-  cancelText: { color: "#888", fontWeight: "600" },
-  saveBtn: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    backgroundColor: "#4A90D9",
-    borderRadius: 8,
-  },
+  cancelText: { fontWeight: "600" },
+  saveBtn: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 },
   saveText: { color: "#fff", fontWeight: "700" },
 });

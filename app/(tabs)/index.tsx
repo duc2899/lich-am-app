@@ -11,6 +11,7 @@ import { getSolarFestival, getLunarFestival } from "../../constants/festivals";
 import DayDetailModal, { DayInfo } from "../../components/DayDetailModal";
 import AddEventModal from "../../components/AddEventModal";
 import { useEventStore } from "../../store/eventStore";
+import { useTheme } from "../../context/ThemeContext";
 
 const WEEKDAYS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 
@@ -25,6 +26,7 @@ function getFirstDayOfWeek(year: number, month: number) {
 // DayInfo được import từ components/DayDetailModal.tsx (dùng chung type, tránh định nghĩa trùng)
 
 export default function CalendarScreen() {
+  const { colors } = useTheme();
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth() + 1);
@@ -119,27 +121,37 @@ export default function CalendarScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       <View style={styles.header}>
         <TouchableOpacity onPress={goPrevMonth} style={styles.navBtn}>
-          <Text style={styles.navText}>‹</Text>
+          <Text style={[styles.navText, { color: colors.text }]}>‹</Text>
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>
             Tháng {month} - {year}
           </Text>
-          <TouchableOpacity onPress={goToToday} style={styles.todayBtn}>
-            <Text style={styles.todayBtnText}>Hôm nay</Text>
+          <TouchableOpacity
+            onPress={goToToday}
+            style={[styles.todayBtn, { backgroundColor: colors.surface }]}
+          >
+            <Text style={[styles.todayBtnText, { color: colors.primary }]}>
+              Hôm nay
+            </Text>
           </TouchableOpacity>
         </View>
         <TouchableOpacity onPress={goNextMonth} style={styles.navBtn}>
-          <Text style={styles.navText}>›</Text>
+          <Text style={[styles.navText, { color: colors.text }]}>›</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.weekRow}>
+      <View style={[styles.weekRow, { borderColor: colors.border }]}>
         {WEEKDAYS.map((wd) => (
-          <Text key={wd} style={styles.weekDayText}>
+          <Text
+            key={wd}
+            style={[styles.weekDayText, { color: colors.textSecondary }]}
+          >
             {wd}
           </Text>
         ))}
@@ -147,7 +159,10 @@ export default function CalendarScreen() {
 
       <View style={styles.grid}>
         {Array.from({ length: firstDayOffset }).map((_, i) => (
-          <View key={`empty-${i}`} style={styles.dayCell} />
+          <View
+            key={`empty-${i}`}
+            style={[styles.dayCell, { borderColor: colors.border }]}
+          />
         ))}
         {days.map((day) => {
           const hasFestival = day.festivals.length > 0;
@@ -155,14 +170,23 @@ export default function CalendarScreen() {
           return (
             <TouchableOpacity
               key={day.date}
-              style={[styles.dayCell, day.isToday && styles.todayCell]}
+              style={[
+                styles.dayCell,
+                { borderColor: colors.border },
+                day.isToday && {
+                  backgroundColor: colors.primary,
+                  borderRadius: 8,
+                },
+              ]}
               onPress={() => setSelectedDay(day)}
             >
               <Text
                 style={[
                   styles.dayText,
-                  day.isToday && styles.todayText,
-                  hasFestival && !day.isToday && styles.festivalDayText,
+                  { color: colors.text },
+                  day.isToday && { color: "#fff" },
+                  hasFestival &&
+                    !day.isToday && { color: colors.danger, fontWeight: "700" },
                 ]}
               >
                 {day.date}
@@ -170,15 +194,31 @@ export default function CalendarScreen() {
               <Text
                 style={[
                   styles.lunarText,
-                  day.isToday && styles.todayText,
-                  day.isLeapMonth && day.lunarDay === 1 && styles.leapText,
+                  { color: colors.textSecondary },
+                  day.isToday && { color: "#fff" },
+                  day.isLeapMonth &&
+                    day.lunarDay === 1 && {
+                      color: colors.accent,
+                      fontWeight: "700",
+                    },
                 ]}
               >
                 {renderLunarLabel(day)}
               </Text>
               <View style={styles.dotRow}>
-                {hasFestival && <View style={styles.festivalDot} />}
-                {hasEvent && <View style={styles.eventDot} />}
+                {hasFestival && (
+                  <View
+                    style={[
+                      styles.festivalDot,
+                      { backgroundColor: colors.danger },
+                    ]}
+                  />
+                )}
+                {hasEvent && (
+                  <View
+                    style={[styles.eventDot, { backgroundColor: "#F5B400" }]}
+                  />
+                )}
               </View>
             </TouchableOpacity>
           );
@@ -187,12 +227,18 @@ export default function CalendarScreen() {
 
       <View style={styles.legendRow}>
         <View style={styles.legendItem}>
-          <View style={styles.festivalDot} />
-          <Text style={styles.legendText}>Ngày lễ</Text>
+          <View
+            style={[styles.festivalDot, { backgroundColor: colors.danger }]}
+          />
+          <Text style={[styles.legendText, { color: colors.textSecondary }]}>
+            Ngày lễ
+          </Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={styles.eventDot} />
-          <Text style={styles.legendText}>Có sự kiện</Text>
+          <View style={[styles.eventDot, { backgroundColor: "#F5B400" }]} />
+          <Text style={[styles.legendText, { color: colors.textSecondary }]}>
+            Có sự kiện
+          </Text>
         </View>
       </View>
 
@@ -231,7 +277,7 @@ export default function CalendarScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1 },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -247,21 +293,18 @@ const styles = StyleSheet.create({
     marginTop: 4,
     paddingHorizontal: 12,
     paddingVertical: 4,
-    backgroundColor: "#EAF2FB",
     borderRadius: 12,
   },
-  todayBtnText: { fontSize: 12, color: "#4A90D9", fontWeight: "600" },
+  todayBtnText: { fontSize: 12, fontWeight: "600" },
   weekRow: {
     flexDirection: "row",
     borderBottomWidth: 1,
-    borderColor: "#eee",
     paddingBottom: 8,
   },
   weekDayText: {
     flex: 1,
     textAlign: "center",
     fontSize: 12,
-    color: "#888",
     fontWeight: "600",
   },
   grid: {
@@ -274,35 +317,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderBottomWidth: 1,
-    borderColor: "#f2f2f2",
-  },
-  todayCell: {
-    backgroundColor: "#4A90D9",
-    borderRadius: 8,
   },
   dayText: { fontSize: 16, fontWeight: "500" },
-  lunarText: { fontSize: 11, color: "#999", marginTop: 2 },
-  leapText: { color: "#E07A00", fontWeight: "700" },
-  todayText: { color: "#fff" },
-  festivalDayText: { color: "#D9364A", fontWeight: "700" },
+  lunarText: { fontSize: 11, marginTop: 2 },
   dotRow: { flexDirection: "row", gap: 3, marginTop: 2 },
   festivalDot: {
-    width: 5,
-    height: 5,
+    width: 7,
+    height: 7,
     borderRadius: 3,
-    backgroundColor: "#D9364A",
   },
   eventDot: {
-    width: 5,
-    height: 5,
+    width: 7,
+    height: 7,
     borderRadius: 3,
-    backgroundColor: "#F5B400",
   },
   legendRow: {
-    flexDirection: "column",
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: 15,
+    display: "flex",
   },
-  legendItem: { flexDirection: "row", alignItems: "center", gap: 10, paddingTop: 5 },
-  legendText: { fontSize: 12, color: "#666" },
+  legendItem: { flexDirection: "row", alignItems: "center", gap: 6 },
+  legendText: { fontSize: 12 },
 });

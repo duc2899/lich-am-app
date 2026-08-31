@@ -9,20 +9,22 @@ import {
 import { useEventStore } from "../../store/eventStore";
 import AddEventModal from "../../components/AddEventModal";
 import { getCategoryByKey } from "../../constants/eventCategories";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function EventsScreen() {
+  const { colors } = useTheme();
   const events = useEventStore((s) => s.events);
   const removeEvent = useEventStore((s) => s.removeEvent);
   const [addOpen, setAddOpen] = useState(false);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <FlatList
         data={events}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>
+          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
             Chưa có sự kiện nào. Bấm nút + để thêm.
           </Text>
         }
@@ -33,16 +35,25 @@ export default function EventsScreen() {
             item.category === "birthday" ? currentYear - item.year : null;
 
           return (
-            <View style={styles.eventCard}>
-              <View style={styles.iconCircle}>
+            <View
+              style={[styles.eventCard, { backgroundColor: colors.surface }]}
+            >
+              <View
+                style={[
+                  styles.iconCircle,
+                  { backgroundColor: colors.background },
+                ]}
+              >
                 <Text style={styles.iconText}>{cat.icon}</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.eventTitle}>
+                <Text style={[styles.eventTitle, { color: colors.text }]}>
                   {item.title}
                   {age !== null && age >= 0 ? ` (${age} tuổi)` : ""}
                 </Text>
-                <Text style={styles.eventSub}>
+                <Text
+                  style={[styles.eventSub, { color: colors.textSecondary }]}
+                >
                   {cat.label} · {item.day}/{item.month}/{item.year} (
                   {item.calendarType === "lunar" ? "Âm lịch" : "Dương lịch"}
                   {item.repeatType === "yearly"
@@ -52,14 +63,19 @@ export default function EventsScreen() {
                 </Text>
               </View>
               <TouchableOpacity onPress={() => removeEvent(item.id)}>
-                <Text style={styles.deleteText}>Xoá</Text>
+                <Text style={[styles.deleteText, { color: colors.danger }]}>
+                  Xoá
+                </Text>
               </TouchableOpacity>
             </View>
           );
         }}
       />
 
-      <TouchableOpacity style={styles.fab} onPress={() => setAddOpen(true)}>
+      <TouchableOpacity
+        style={[styles.fab, { backgroundColor: colors.primary }]}
+        onPress={() => setAddOpen(true)}
+      >
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
 
@@ -69,13 +85,12 @@ export default function EventsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1 },
   listContent: { padding: 16, flexGrow: 1 },
-  emptyText: { textAlign: "center", color: "#999", marginTop: 40 },
+  emptyText: { textAlign: "center", marginTop: 40 },
   eventCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F7F7F7",
     borderRadius: 10,
     padding: 14,
     marginBottom: 10,
@@ -84,15 +99,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#EAF2FB",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
   },
   iconText: { fontSize: 18 },
-  eventTitle: { fontSize: 15, fontWeight: "700", color: "#222" },
-  eventSub: { fontSize: 12, color: "#888", marginTop: 4 },
-  deleteText: { color: "#D9364A", fontWeight: "600" },
+  eventTitle: { fontSize: 15, fontWeight: "700" },
+  eventSub: { fontSize: 12, marginTop: 4 },
+  deleteText: { fontWeight: "600" },
   fab: {
     position: "absolute",
     right: 20,
@@ -100,7 +114,6 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "#4A90D9",
     alignItems: "center",
     justifyContent: "center",
     elevation: 4,
