@@ -95,39 +95,62 @@ export default function DayDetailModal({
                 <Text style={[styles.label, { color: colors.text }]}>
                   Ngày{" "}
                 </Text>
-                <Text style={styles.valueBold}>{getDayCanChi(day.jd)}</Text>
+                <Text style={[styles.valueBold, { color: colors.text }]}>
+                  {getDayCanChi(day.jd)}
+                </Text>
                 <Text style={[styles.label, { color: colors.text }]}>
                   {" "}
                   tháng{" "}
                 </Text>
-                <Text style={styles.valueBold}>
+                <Text style={[styles.valueBold, { color: colors.text }]}>
                   {getMonthCanChi(day.lunarMonth, day.lunarYear)}
                 </Text>
                 <Text style={[styles.label, { color: colors.text }]}>
                   {" "}
                   năm{" "}
                 </Text>
-                <Text style={styles.valueBold}>
+                <Text style={[styles.valueBold, { color: colors.text }]}>
                   {getYearCanChi(day.lunarYear)}
                 </Text>
               </View>
 
               {day.festivals.length > 0 && (
-                <View style={styles.festivalBox}>
-                  <Text style={styles.festivalText}>
+                <View
+                  style={[
+                    styles.festivalBox,
+                    { backgroundColor: colors.surface },
+                  ]}
+                >
+                  <Text style={[styles.festivalText, { color: colors.text }]}>
                     🎉 {day.festivals.join(", ")}
                   </Text>
                 </View>
               )}
 
               {day.matchedEvents.length > 0 && (
-                <View style={styles.eventsBox}>
+                <View
+                  style={[
+                    styles.eventsBox,
+                    { backgroundColor: colors.surface },
+                  ]}
+                >
                   {day.matchedEvents.map((ev) => {
                     const cat = getCategoryByKey(ev.category);
                     return (
                       <View key={ev.id} style={styles.eventRow}>
-                        <Text style={styles.eventIcon}>{cat.icon}</Text>
-                        <Text style={styles.eventTitleText}>{ev.title}</Text>
+                        <Text
+                          style={[styles.eventIcon, { color: colors.text }]}
+                        >
+                          {cat.icon}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.eventTitleText,
+                            { color: colors.text },
+                          ]}
+                        >
+                          {ev.title}
+                        </Text>
                       </View>
                     );
                   })}
@@ -190,7 +213,7 @@ const styles = StyleSheet.create({
   },
   eventRow: { flexDirection: "row", alignItems: "center", marginBottom: 6 },
   eventIcon: { fontSize: 16, marginRight: 8 },
-  eventTitleText: { fontSize: 13, color: "#7A6A00", fontWeight: "600" },
+  eventTitleText: { fontSize: 13, fontWeight: "600" },
   actionRow: {
     marginTop: 4,
     flexDirection: "row",

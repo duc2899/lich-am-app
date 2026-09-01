@@ -14,6 +14,7 @@ import { useFamilyStore } from "../store/familyStore";
 import { useToastStore } from "../store/toastStore";
 import { Gender, Person } from "../types/family";
 import ToggleButton from "./ToggleButton";
+import { useTheme } from "../context/ThemeContext";
 
 type Props = {
   visible: boolean;
@@ -22,6 +23,7 @@ type Props = {
 };
 
 export default function EditPersonModal({ visible, person, onClose }: Props) {
+  const { colors } = useTheme();
   const editPerson = useFamilyStore((s) => s.editPerson);
   const showToast = useToastStore((s) => s.showToast);
   const [fullName, setFullName] = useState("");
@@ -104,11 +106,23 @@ export default function EditPersonModal({ visible, person, onClose }: Props) {
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
         <Pressable style={styles.overlay} onPress={onClose}>
-          <Pressable style={styles.card} onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.heading}>Sửa thông tin</Text>
+          <Pressable
+            style={[styles.card, { backgroundColor: colors.surface }]}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <Text style={[styles.heading, { color: colors.text }]}>
+              Sửa thông tin
+            </Text>
 
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                {
+                  backgroundColor: colors.background,
+                  color: colors.text,
+                  borderColor: colors.border,
+                },
+              ]}
               placeholder="Họ và tên"
               value={fullName}
               onChangeText={(v) => {
@@ -117,7 +131,9 @@ export default function EditPersonModal({ visible, person, onClose }: Props) {
               }}
             />
 
-            <Text style={styles.label}>Giới tính</Text>
+            <Text style={[styles.label, { color: colors.text }]}>
+              Giới tính
+            </Text>
             <View style={styles.toggleRow}>
               <ToggleButton
                 active={gender === "male"}
@@ -131,9 +147,18 @@ export default function EditPersonModal({ visible, person, onClose }: Props) {
               />
             </View>
 
-            <Text style={styles.label}>Năm sinh (không bắt buộc)</Text>
+            <Text style={[styles.label, { color: colors.text }]}>
+              Năm sinh (không bắt buộc)
+            </Text>
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                {
+                  backgroundColor: colors.background,
+                  color: colors.text,
+                  borderColor: colors.border,
+                },
+              ]}
               placeholder="vd: 1975"
               keyboardType="number-pad"
               value={birthYear}
@@ -143,7 +168,9 @@ export default function EditPersonModal({ visible, person, onClose }: Props) {
               }}
             />
 
-            <Text style={styles.label}>Tình trạng</Text>
+            <Text style={[styles.label, { color: colors.text }]}>
+              Tình trạng
+            </Text>
             <View style={styles.toggleRow}>
               <ToggleButton
                 active={!isDeceased}
@@ -160,9 +187,18 @@ export default function EditPersonModal({ visible, person, onClose }: Props) {
 
             {isDeceased && (
               <>
-                <Text style={styles.label}>Năm mất</Text>
+                <Text style={[styles.label, { color: colors.text }]}>
+                  Năm mất
+                </Text>
                 <TextInput
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: colors.background,
+                      color: colors.text,
+                      borderColor: colors.border,
+                    },
+                  ]}
                   placeholder="vd: 2020"
                   keyboardType="number-pad"
                   value={deathYear}
@@ -178,10 +214,15 @@ export default function EditPersonModal({ visible, person, onClose }: Props) {
 
             <View style={styles.actionRow}>
               <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
-                <Text style={styles.cancelText}>Huỷ</Text>
+                <Text style={[styles.cancelText, { color: colors.text }]}>
+                  Huỷ
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-                <Text style={styles.saveText}>Lưu</Text>
+              <TouchableOpacity
+                style={[styles.saveBtn, { backgroundColor: colors.primary }]}
+                onPress={handleSave}
+              >
+                <Text style={[styles.saveText]}>Lưu</Text>
               </TouchableOpacity>
             </View>
           </Pressable>
@@ -198,7 +239,6 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   card: {
-    backgroundColor: "#fff",
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     padding: 20,
@@ -206,25 +246,22 @@ const styles = StyleSheet.create({
   heading: { fontSize: 18, fontWeight: "700", marginBottom: 16 },
   input: {
     borderWidth: 1,
-    borderColor: "#ddd",
     borderRadius: 8,
     padding: 10,
     marginBottom: 16,
     fontSize: 14,
     color: "#222",
-    backgroundColor: "#fff",
   },
   label: { fontSize: 13, color: "#666", marginBottom: 8, fontWeight: "600" },
   toggleRow: { flexDirection: "row", gap: 8, marginBottom: 16 },
   errorText: { fontSize: 12, color: "#D9364A", marginBottom: 12 },
   actionRow: { flexDirection: "row", justifyContent: "flex-end", gap: 12 },
   cancelBtn: { paddingHorizontal: 16, paddingVertical: 10 },
-  cancelText: { color: "#888", fontWeight: "600" },
+  cancelText: { fontWeight: "600" },
   saveBtn: {
     paddingHorizontal: 20,
     paddingVertical: 10,
-    backgroundColor: "#4A90D9",
     borderRadius: 8,
   },
-  saveText: { color: "#fff", fontWeight: "700" },
+  saveText: { fontWeight: "700", color: "#fff" },
 });

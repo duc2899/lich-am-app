@@ -16,8 +16,10 @@ import { computeTruongLineage } from "../../utils/familyLineage";
 import { useFamilyStore } from "../../store/familyStore";
 import { useToastStore } from "../../store/toastStore";
 import { Person } from "../../types/family";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function FamilyScreen() {
+  const { colors } = useTheme();
   const persons = useFamilyStore((s) => s.persons);
   const families = useFamilyStore((s) => s.families);
   const rootPersonId = useFamilyStore((s) => s.rootPersonId);
@@ -114,7 +116,7 @@ export default function FamilyScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <FamilyTreeView
         root={rootNode}
         onPersonPress={handlePersonPress}
@@ -123,7 +125,7 @@ export default function FamilyScreen() {
         mePersonId={mePersonId}
       />
       <FamilyLegend />
-      <Text style={styles.hint}>
+      <Text style={[styles.hint, { color: colors.textSecondary, backgroundColor: colors.surface }]}>
         Chụm 2 ngón tay để zoom · Bấm + trên dây nối để thêm con
       </Text>
 
@@ -161,15 +163,13 @@ export default function FamilyScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1 },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   hint: {
     position: "absolute",
     bottom: 16,
     alignSelf: "center",
     fontSize: 11,
-    color: "#999",
-    backgroundColor: "#fff",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 10,

@@ -10,6 +10,7 @@ import { solarToLunar } from "../../constants/lunar";
 import { getSolarFestival, getLunarFestival } from "../../constants/festivals";
 import DayDetailModal, { DayInfo } from "../../components/DayDetailModal";
 import AddEventModal from "../../components/AddEventModal";
+import DailyQuoteCard from "../../components/DailyQuoteCard";
 import { useEventStore } from "../../store/eventStore";
 import { useTheme } from "../../context/ThemeContext";
 
@@ -242,6 +243,8 @@ export default function CalendarScreen() {
         </View>
       </View>
 
+      <DailyQuoteCard />
+
       <DayDetailModal
         day={selectedDay}
         month={month}
@@ -322,19 +325,23 @@ const styles = StyleSheet.create({
   lunarText: { fontSize: 11, marginTop: 2 },
   dotRow: { flexDirection: "row", gap: 3, marginTop: 2 },
   festivalDot: {
-    width: 7,
-    height: 7,
+    width: 5,
+    height: 5,
     borderRadius: 3,
   },
   eventDot: {
-    width: 7,
-    height: 7,
+    width: 5,
+    height: 5,
     borderRadius: 3,
   },
   legendRow: {
-    paddingHorizontal: 20,
-    paddingVertical: 15,
     display: "flex",
+    flexDirection: "row",
+    gap: 16,
+    marginTop: 8,
+    marginBottom: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
   legendItem: { flexDirection: "row", alignItems: "center", gap: 6 },
   legendText: { fontSize: 12 },

@@ -5,7 +5,14 @@ import {
   PanResponder,
   GestureResponderEvent,
 } from "react-native";
-import Svg, { Rect, Line, Circle, Text as SvgText } from "react-native-svg";
+import Svg, {
+  Rect,
+  Line,
+  Circle,
+  Text as SvgText,
+  Defs,
+  Pattern,
+} from "react-native-svg";
 import { DisplayNode } from "../utils/familyTreeBuilder";
 import {
   computeFamilyTreeLayout,
@@ -13,6 +20,7 @@ import {
   NODE_HEIGHT,
 } from "../utils/familyTreeLayout";
 import { Person } from "../types/family";
+import { useTheme } from "../context/ThemeContext";
 
 type Props = {
   root: DisplayNode;
@@ -158,6 +166,7 @@ export default function FamilyTreeView({
   truongIds,
   mePersonId,
 }: Props) {
+  const { colors } = useTheme();
   // Nhờ getNodeChildren() đã chèn placeholder cho nhánh rỗng, d3 giờ tự biết đủ toàn bộ
   // nhánh (kể cả chưa có con) và tự tính width/vị trí chính xác -- không cần patch tay nữa.
   const { nodes, width, height } = computeFamilyTreeLayout(root);
@@ -244,7 +253,10 @@ export default function FamilyTreeView({
   ).current;
 
   return (
-    <View style={styles.container} {...panResponder.panHandlers}>
+    <View
+      style={[styles.container, { backgroundColor: colors.background }]}
+      {...panResponder.panHandlers}
+    >
       <View
         style={{
           transform: [
@@ -255,6 +267,25 @@ export default function FamilyTreeView({
         }}
       >
         <Svg width={width} height={height}>
+          <Defs>
+            {/* Lưới chấm nhẹ làm nền canvas -- đỡ trống trải, đặc biệt ở dark mode (nền đen phẳng nhìn hơi trơ) */}
+            <Pattern
+              id="dotGrid"
+              width={28}
+              height={28}
+              patternUnits="userSpaceOnUse"
+            >
+              <Circle cx={2} cy={2} r={1.8} fill={colors.border} />
+            </Pattern>
+          </Defs>
+          <Rect
+            x={0}
+            y={0}
+            width={width}
+            height={height}
+            fill="url(#dotGrid)"
+          />
+
           {nodes.map((node) => {
             const cx = node.x + offsetX;
             const cy = node.y + offsetY;
@@ -554,7 +585,6 @@ function PersonBox({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
     overflow: "hidden",
   },
 });

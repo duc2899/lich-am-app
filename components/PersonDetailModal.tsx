@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { Person } from "../types/family";
 import { PersonRelations } from "../utils/familyRelations";
+import { useTheme } from "../context/ThemeContext";
 
 type Props = {
   person: Person | null;
@@ -34,6 +35,7 @@ export default function PersonDetailModal({
   isMe,
   onToggleMe,
 }: Props) {
+  const { colors } = useTheme();
   const currentYear = new Date().getFullYear();
   const isDeceased = !!person?.deathYear;
 
@@ -49,15 +51,18 @@ export default function PersonDetailModal({
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
-        <Pressable style={styles.overlay} onPress={onClose}>
-          <Pressable style={styles.card} onPress={(e) => e.stopPropagation()}>
+        <Pressable style={[styles.overlay]} onPress={onClose}>
+          <Pressable
+            style={[styles.card, { backgroundColor: colors.surface }]}
+            onPress={(e) => e.stopPropagation()}
+          >
             {person && (
               <>
                 <View style={styles.header}>
-                  <Text style={styles.genderIcon}>
+                  <Text style={[styles.genderIcon, { color: colors.primary }]}>
                     {person.gender === "male" ? "♂" : "♀"}
                   </Text>
-                  <Text style={styles.name}>
+                  <Text style={[styles.name, { color: colors.text }]}>
                     {isTruong ? "👑 " : ""}
                     {person.fullName}
                     {isMe ? "  (Tôi)" : ""}
@@ -68,21 +73,23 @@ export default function PersonDetailModal({
                 </View>
 
                 <View style={styles.row}>
-                  <Text style={styles.label}>Giới tính: </Text>
-                  <Text style={styles.value}>
+                  <Text style={[styles.label, { color: colors.text }]}>
+                    Giới tính:{" "}
+                  </Text>
+                  <Text style={[styles.value, { color: colors.text }]}>
                     {person.gender === "male" ? "Nam" : "Nữ"}
                   </Text>
                 </View>
 
                 {person.birthYear && (
                   <View style={styles.row}>
-                    <Text style={styles.label}>Năm sinh: </Text>
-                    <Text style={styles.value}>{person.birthYear}</Text>
+                    <Text style={[styles.label, { color: colors.text }]}>Năm sinh: </Text>
+                    <Text style={[styles.value, { color: colors.text }]}>{person.birthYear}</Text>
                   </View>
                 )}
 
                 <View style={styles.row}>
-                  <Text style={styles.label}>Tình trạng: </Text>
+                  <Text style={[styles.label, { color: colors.text }]}>Tình trạng: </Text>
                   {isDeceased ? (
                     <Text style={[styles.value, styles.deceasedText]}>
                       Đã mất{person.deathYear ? ` (${person.deathYear})` : ""}
@@ -91,7 +98,7 @@ export default function PersonDetailModal({
                         : ""}
                     </Text>
                   ) : (
-                    <Text style={styles.value}>
+                    <Text style={[styles.value, { color: colors.text }]}>
                       Còn sống
                       {person.birthYear
                         ? ` · ${currentYear - person.birthYear} tuổi`
@@ -102,8 +109,8 @@ export default function PersonDetailModal({
 
                 {relations && (relations.father || relations.mother) && (
                   <View style={styles.row}>
-                    <Text style={styles.label}>Cha mẹ: </Text>
-                    <Text style={styles.value}>
+                    <Text style={[styles.label, { color: colors.text }]}>Cha mẹ: </Text>
+                    <Text style={[styles.value, { color: colors.text }]}>
                       {[relations.father?.fullName, relations.mother?.fullName]
                         .filter(Boolean)
                         .join(" & ")}
@@ -113,10 +120,10 @@ export default function PersonDetailModal({
 
                 {relations && relations.spouses.length > 0 && (
                   <View style={styles.row}>
-                    <Text style={styles.label}>
+                    <Text style={[styles.label, { color: colors.text }]}>
                       {person.gender === "male" ? "Vợ: " : "Chồng: "}
                     </Text>
-                    <Text style={styles.value}>
+                    <Text style={[styles.value, { color: colors.text }]}>
                       {relations.spouses.map((s) => s.fullName).join(", ")}
                     </Text>
                   </View>
@@ -124,20 +131,20 @@ export default function PersonDetailModal({
 
                 {relations && relations.children.length > 0 && (
                   <View style={styles.row}>
-                    <Text style={styles.label}>
+                    <Text style={[styles.label, { color: colors.text }]}>
                       Con ({relations.children.length}):{" "}
                     </Text>
-                    <Text style={styles.value}>
+                    <Text style={[styles.value, { color: colors.text }]}>
                       {relations.children.map((c) => c.fullName).join(", ")}
                     </Text>
                   </View>
                 )}
 
                 <TouchableOpacity
-                  style={styles.addSpouseBtn}
+                  style={[styles.addSpouseBtn, { backgroundColor: colors.primary }]}
                   onPress={onAddSpouse}
                 >
-                  <Text style={styles.addSpouseBtnText}>
+                  <Text style={[styles.addSpouseBtnText, { color: colors.text }]}>
                     {relations && relations.spouses.length > 0
                       ? "+ Thêm vợ/chồng khác"
                       : "+ Thêm vợ/chồng"}
@@ -145,21 +152,21 @@ export default function PersonDetailModal({
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.meBtn, isMe && styles.meBtnActive]}
+                  style={[styles.meBtn, { backgroundColor: isMe ? colors.success : colors.textSecondary }]}
                   onPress={onToggleMe}
                 >
                   <Text
-                    style={[styles.meBtnText, isMe && styles.meBtnTextActive]}
+                    style={[styles.meBtnText, { color: colors.text }]}
                   >
                     {isMe ? "✓ Đây là tôi" : "Đánh dấu đây là tôi"}
                   </Text>
                 </TouchableOpacity>
 
                 <View style={styles.bottomRow}>
-                  <TouchableOpacity style={styles.deleteBtn} onPress={onDelete}>
-                    <Text style={styles.deleteBtnText}>🗑️ Xoá</Text>
+                  <TouchableOpacity style={[styles.deleteBtn, { backgroundColor: colors.surface }]} onPress={onDelete}>
+                    <Text style={styles.deleteBtnText}>Xoá</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
+                  <TouchableOpacity style={[styles.closeBtn, { backgroundColor: colors.primary }]} onPress={onClose}>
                     <Text style={styles.closeBtnText}>Đóng</Text>
                   </TouchableOpacity>
                 </View>
@@ -180,7 +187,6 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   card: {
-    backgroundColor: "#fff",
     borderRadius: 16,
     padding: 20,
   },
@@ -201,22 +207,20 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#222",
     flexShrink: 1,
     flex: 1,
   },
   editIconBtn: { padding: 4, marginLeft: 8 },
   editIconText: { fontSize: 16 },
   row: { flexDirection: "row", flexWrap: "wrap", marginBottom: 10 },
-  label: { fontSize: 13, color: "#888", fontWeight: "600" },
-  value: { fontSize: 13, color: "#222", fontWeight: "500", flexShrink: 1 },
+  label: { fontSize: 13, fontWeight: "600" },
+  value: { fontSize: 13, fontWeight: "500", flexShrink: 1 },
   deceasedText: { color: "#999" },
   addSpouseBtn: {
     marginTop: 8,
     alignSelf: "flex-start",
     paddingHorizontal: 14,
     paddingVertical: 8,
-    backgroundColor: "#EAF7EE",
     borderRadius: 8,
   },
   addSpouseBtnText: { color: "#2E8B57", fontWeight: "700", fontSize: 13 },
@@ -225,12 +229,9 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     paddingHorizontal: 14,
     paddingVertical: 8,
-    backgroundColor: "#F2F2F2",
     borderRadius: 8,
   },
-  meBtnActive: { backgroundColor: "#2E8B57" },
-  meBtnText: { color: "#666", fontWeight: "600", fontSize: 13 },
-  meBtnTextActive: { color: "#fff" },
+  meBtnText: { fontWeight: "600", fontSize: 13 },
   bottomRow: {
     marginTop: 16,
     flexDirection: "row",
@@ -240,14 +241,12 @@ const styles = StyleSheet.create({
   deleteBtn: {
     paddingHorizontal: 14,
     paddingVertical: 8,
-    backgroundColor: "#FDEDEE",
     borderRadius: 8,
   },
   deleteBtnText: { color: "#D9364A", fontWeight: "700", fontSize: 13 },
   closeBtn: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: "#4A90D9",
     borderRadius: 8,
   },
   closeBtnText: { color: "#fff", fontWeight: "600" },

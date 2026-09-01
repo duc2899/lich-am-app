@@ -1,31 +1,109 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  ScrollView,
 } from "react-native";
 import { useEventStore } from "../../store/eventStore";
 import AddEventModal from "../../components/AddEventModal";
-import { getCategoryByKey } from "../../constants/eventCategories";
+import {
+  getCategoryByKey,
+  EVENT_CATEGORIES,
+  EventCategoryKey,
+} from "../../constants/eventCategories";
 import { useTheme } from "../../context/ThemeContext";
+
+type FilterKey = "all" | EventCategoryKey;
 
 export default function EventsScreen() {
   const { colors } = useTheme();
   const events = useEventStore((s) => s.events);
   const removeEvent = useEventStore((s) => s.removeEvent);
   const [addOpen, setAddOpen] = useState(false);
+  const [filter, setFilter] = useState<FilterKey>("all");
+
+  const filteredEvents = useMemo(
+    () =>
+      filter === "all" ? events : events.filter((e) => e.category === filter),
+    [events, filter],
+  );
+
+  const countByCategory = useMemo(() => {
+    const map = new Map<EventCategoryKey, number>();
+    for (const e of events) {
+      map.set(e.category, (map.get(e.category) ?? 0) + 1);
+    }
+    return map;
+  }, [events]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.filterScroll}
+        contentContainerStyle={styles.filterScrollContent}
+      >
+        <TouchableOpacity
+          style={[
+            styles.filterChip,
+            { backgroundColor: colors.surface, borderColor: "transparent" },
+            filter === "all" && { borderColor: colors.primary },
+          ]}
+          onPress={() => setFilter("all")}
+        >
+          <Text
+            style={[
+              styles.filterLabel,
+              { color: colors.textSecondary },
+              filter === "all" && { color: colors.primary, fontWeight: "700" },
+            ]}
+          >
+            Tất cả ({events.length})
+          </Text>
+        </TouchableOpacity>
+        {EVENT_CATEGORIES.map((c) => {
+          const count = countByCategory.get(c.key) ?? 0;
+          return (
+            <TouchableOpacity
+              key={c.key}
+              style={[
+                styles.filterChip,
+                { backgroundColor: colors.surface, borderColor: "transparent" },
+                filter === c.key && { borderColor: colors.primary },
+              ]}
+              onPress={() => setFilter(c.key)}
+            >
+              <Text style={styles.filterIcon}>{c.icon}</Text>
+              <Text
+                style={[
+                  styles.filterLabel,
+                  { color: colors.textSecondary },
+                  filter === c.key && {
+                    color: colors.primary,
+                    fontWeight: "700",
+                  },
+                ]}
+              >
+                {c.label} ({count})
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
       <FlatList
-        data={events}
+        data={filteredEvents}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-            Chưa có sự kiện nào. Bấm nút + để thêm.
+            {filter === "all"
+              ? "Chưa có sự kiện nào. Bấm nút + để thêm."
+              : "Không có sự kiện nào thuộc loại này."}
           </Text>
         }
         renderItem={({ item }) => {
@@ -86,6 +164,18 @@ export default function EventsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  filterScroll: { flexGrow: 0, paddingTop: 12 },
+  filterScrollContent: { paddingHorizontal: 16, gap: 8, paddingBottom: 4 },
+  filterChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1.5,
+  },
+  filterIcon: { fontSize: 14, marginRight: 6 },
+  filterLabel: { fontSize: 13, fontWeight: "600" },
   listContent: { padding: 16, flexGrow: 1 },
   emptyText: { textAlign: "center", marginTop: 40 },
   eventCard: {

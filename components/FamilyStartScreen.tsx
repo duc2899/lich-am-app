@@ -13,8 +13,10 @@ import { useFamilyStore } from "../store/familyStore";
 import { useToastStore } from "../store/toastStore";
 import { Gender } from "../types/family";
 import ToggleButton from "./ToggleButton";
+import { useTheme } from "../context/ThemeContext";
 
 export default function FamilyStartScreen() {
+  const { colors } = useTheme();
   const createRootPerson = useFamilyStore((s) => s.createRootPerson);
   const showToast = useToastStore((s) => s.showToast);
   const [fullName, setFullName] = useState("");
@@ -43,20 +45,34 @@ export default function FamilyStartScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1 }}
+      style={{ flex: 1, backgroundColor: colors.background }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
     >
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.container,
+          { backgroundColor: colors.background },
+        ]}
+      >
         <Text style={styles.icon}>🌳</Text>
-        <Text style={styles.heading}>Bắt đầu xây gia phả</Text>
-        <Text style={styles.subtitle}>
+        <Text style={[styles.heading, { color: colors.text }]}>
+          Bắt đầu xây gia phả
+        </Text>
+        <Text style={[styles.subtitle, { color: colors.text }]}>
           Nhập người đầu tiên trong dòng họ (thường là ông/bà tổ) để bắt đầu.
           Sau đó bạn có thể thêm vợ/chồng, con cái từ người này.
         </Text>
-
+        <Text style={[styles.label, { color: colors.text }]}>Họ và tên *</Text>
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            {
+              backgroundColor: colors.surface,
+              color: colors.text,
+              borderColor: colors.border,
+            },
+          ]}
           placeholder="Họ và tên"
           placeholderTextColor="#999"
           value={fullName}
@@ -66,7 +82,7 @@ export default function FamilyStartScreen() {
           }}
         />
 
-        <Text style={styles.label}>Giới tính</Text>
+        <Text style={[styles.label, { color: colors.text }]}>Giới tính</Text>
         <View style={styles.toggleRow}>
           <ToggleButton
             active={gender === "male"}
@@ -80,9 +96,16 @@ export default function FamilyStartScreen() {
           />
         </View>
 
-        <Text style={styles.label}>Năm sinh *</Text>
+        <Text style={[styles.label, { color: colors.text }]}>Năm sinh *</Text>
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            {
+              backgroundColor: colors.surface,
+              color: colors.text,
+              borderColor: colors.border,
+            },
+          ]}
           placeholder="vd: 1945"
           placeholderTextColor="#999"
           keyboardType="number-pad"
@@ -96,7 +119,9 @@ export default function FamilyStartScreen() {
         {error !== "" && <Text style={styles.errorText}>{error}</Text>}
 
         <TouchableOpacity style={styles.startBtn} onPress={handleStart}>
-          <Text style={styles.startBtnText}>Bắt đầu</Text>
+          <Text style={[styles.startBtnText, { color: colors.text }]}>
+            Bắt đầu
+          </Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>

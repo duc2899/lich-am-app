@@ -14,6 +14,7 @@ import { useFamilyStore } from "../store/familyStore";
 import { useToastStore } from "../store/toastStore";
 import { Gender } from "../types/family";
 import ToggleButton from "./ToggleButton";
+import { useTheme } from "../context/ThemeContext";
 
 type Props = {
   visible: boolean;
@@ -22,6 +23,7 @@ type Props = {
 };
 
 export default function AddChildModal({ visible, familyId, onClose }: Props) {
+  const { colors } = useTheme();
   const addChildToFamily = useFamilyStore((s) => s.addChildToFamily);
   const showToast = useToastStore((s) => s.showToast);
   const [fullName, setFullName] = useState("");
@@ -76,11 +78,23 @@ export default function AddChildModal({ visible, familyId, onClose }: Props) {
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
         <Pressable style={styles.overlay} onPress={onClose}>
-          <Pressable style={styles.card} onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.heading}>Thêm con</Text>
+          <Pressable
+            style={[styles.card, { backgroundColor: colors.surface }]}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <Text style={[styles.heading, { color: colors.text }]}>
+              Thêm con
+            </Text>
 
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                {
+                  backgroundColor: colors.background,
+                  color: colors.text,
+                  borderColor: colors.border,
+                },
+              ]}
               placeholder="Họ và tên"
               value={fullName}
               onChangeText={(v) => {
@@ -89,7 +103,9 @@ export default function AddChildModal({ visible, familyId, onClose }: Props) {
               }}
             />
 
-            <Text style={styles.label}>Giới tính</Text>
+            <Text style={[styles.label, { color: colors.text }]}>
+              Giới tính
+            </Text>
             <View style={styles.toggleRow}>
               <ToggleButton
                 active={gender === "male"}
@@ -103,9 +119,18 @@ export default function AddChildModal({ visible, familyId, onClose }: Props) {
               />
             </View>
 
-            <Text style={styles.label}>Năm sinh *</Text>
+            <Text style={[styles.label, { color: colors.text }]}>
+              Năm sinh *
+            </Text>
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                {
+                  backgroundColor: colors.background,
+                  color: colors.text,
+                  borderColor: colors.border,
+                },
+              ]}
               placeholder="vd: 2015"
               keyboardType="number-pad"
               value={birthYear}
