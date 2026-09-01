@@ -144,7 +144,7 @@ export default function PersonDetailModal({
                   style={[styles.addSpouseBtn, { backgroundColor: colors.primary }]}
                   onPress={onAddSpouse}
                 >
-                  <Text style={[styles.addSpouseBtnText, { color: colors.text }]}>
+                  <Text style={[styles.addSpouseBtnText]}>
                     {relations && relations.spouses.length > 0
                       ? "+ Thêm vợ/chồng khác"
                       : "+ Thêm vợ/chồng"}
@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
   },
-  addSpouseBtnText: { color: "#2E8B57", fontWeight: "700", fontSize: 13 },
+  addSpouseBtnText: { color: "#fff", fontWeight: "700", fontSize: 13 },
   meBtn: {
     marginTop: 10,
     alignSelf: "flex-start",

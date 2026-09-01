@@ -17,6 +17,11 @@ import { useSettingsStore } from "../../store/settingsStore";
 import { useToastStore } from "../../store/toastStore";
 import { useAuthStore } from "../../store/authStore";
 import { useTheme, ThemeMode } from "../../context/ThemeContext";
+import {
+  requestNotificationPermission,
+  cancelAllEventNotifications,
+  scheduleTestNotification,
+} from "../../utils/eventNotifications";
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -35,6 +40,25 @@ export default function SettingsScreen() {
 
   const handleSetMode = (newMode: ThemeMode) => {
     setMode(newMode);
+  };
+
+  const handleToggleNotifications = async (value: boolean) => {
+    if (value) {
+      const granted = await requestNotificationPermission();
+      if (!granted) {
+        showToast(
+          "Cần cấp quyền thông báo trong Cài đặt điện thoại",
+          "warning",
+        );
+        return; // không bật toggle nếu chưa được cấp quyền
+      }
+      setNotificationsEnabled(true);
+      showToast("Đã bật thông báo");
+    } else {
+      await cancelAllEventNotifications();
+      setNotificationsEnabled(false);
+      showToast("Đã tắt thông báo, huỷ toàn bộ lịch đã đặt");
+    }
   };
 
   const handleLogout = () => {
@@ -93,6 +117,17 @@ export default function SettingsScreen() {
     ).catch(() => {
       showToast("Không mở được ứng dụng email trên thiết bị này", "error");
     });
+  };
+
+  const handleTestNotification = async () => {
+    const id = await scheduleTestNotification(10);
+    if (id) {
+      showToast(
+        "Đã đặt lịch! Chờ 10 giây rồi kiểm tra thông báo (thoát app xuống nền để thấy rõ nhất)",
+      );
+    } else {
+      showToast("Chưa được cấp quyền thông báo", "warning");
+    }
   };
 
   return (
@@ -165,7 +200,12 @@ export default function SettingsScreen() {
           label="Cho phép thông báo"
           type="toggle"
           toggled={notificationsEnabled}
-          onToggle={setNotificationsEnabled}
+          onToggle={handleToggleNotifications}
+        />
+        <SettingsRow
+          icon="🧪"
+          label="Test thông báo (bắn sau 10 giây)"
+          onPress={handleTestNotification}
           isLast
         />
       </SettingsSection>

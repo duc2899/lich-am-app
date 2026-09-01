@@ -165,10 +165,10 @@ export default function AddEventModal({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validate()) return;
 
-    addEvent({
+    await addEvent({
       title: title.trim(),
       category,
       calendarType,

@@ -119,7 +119,7 @@ export default function FamilyStartScreen() {
         {error !== "" && <Text style={styles.errorText}>{error}</Text>}
 
         <TouchableOpacity style={styles.startBtn} onPress={handleStart}>
-          <Text style={[styles.startBtnText, { color: colors.text }]}>
+          <Text style={[styles.startBtnText]}>
             Bắt đầu
           </Text>
         </TouchableOpacity>

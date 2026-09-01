@@ -6,6 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
   ScrollView,
+  Alert,
 } from "react-native";
 import { useEventStore } from "../../store/eventStore";
 import AddEventModal from "../../components/AddEventModal";
@@ -15,15 +16,34 @@ import {
   EventCategoryKey,
 } from "../../constants/eventCategories";
 import { useTheme } from "../../context/ThemeContext";
+import { useToastStore } from "../../store/toastStore";
 
 type FilterKey = "all" | EventCategoryKey;
 
 export default function EventsScreen() {
   const { colors } = useTheme();
-  const events = useEventStore((s) => s.events);
-  const removeEvent = useEventStore((s) => s.removeEvent);
+  const showToast = useToastStore((s) => s.showToast);
+  const { events, removeEvent } = useEventStore();
   const [addOpen, setAddOpen] = useState(false);
   const [filter, setFilter] = useState<FilterKey>("all");
+
+  const handleDeleteEvent = (eventId: string) => {
+    if (!eventId) return;
+    Alert.alert("Xác nhận xoá", "Bạn có chắc muốn xoá sự kiện này?", [
+      {
+        text: "Huỷ",
+        style: "cancel",
+      },
+      {
+        text: "Xoá",
+        style: "destructive",
+        onPress: () => {
+          removeEvent(eventId);
+          showToast("Đã xoá sự kiện");
+        },
+      },
+    ]);
+  };
 
   const filteredEvents = useMemo(
     () =>
@@ -140,7 +160,7 @@ export default function EventsScreen() {
                   )
                 </Text>
               </View>
-              <TouchableOpacity onPress={() => removeEvent(item.id)}>
+              <TouchableOpacity onPress={() => handleDeleteEvent(item.id)}>
                 <Text style={[styles.deleteText, { color: colors.danger }]}>
                   Xoá
                 </Text>
