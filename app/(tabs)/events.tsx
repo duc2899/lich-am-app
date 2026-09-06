@@ -6,8 +6,8 @@ import {
   FlatList,
   TouchableOpacity,
   ScrollView,
-  Alert,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useEventStore } from "../../store/eventStore";
 import AddEventModal from "../../components/AddEventModal";
 import {
@@ -16,34 +16,16 @@ import {
   EventCategoryKey,
 } from "../../constants/eventCategories";
 import { useTheme } from "../../context/ThemeContext";
-import { useToastStore } from "../../store/toastStore";
 
 type FilterKey = "all" | EventCategoryKey;
 
 export default function EventsScreen() {
   const { colors } = useTheme();
-  const showToast = useToastStore((s) => s.showToast);
-  const { events, removeEvent } = useEventStore();
+  const insets = useSafeAreaInsets();
+  const events = useEventStore((s) => s.events);
+  const removeEvent = useEventStore((s) => s.removeEvent);
   const [addOpen, setAddOpen] = useState(false);
   const [filter, setFilter] = useState<FilterKey>("all");
-
-  const handleDeleteEvent = (eventId: string) => {
-    if (!eventId) return;
-    Alert.alert("Xác nhận xoá", "Bạn có chắc muốn xoá sự kiện này?", [
-      {
-        text: "Huỷ",
-        style: "cancel",
-      },
-      {
-        text: "Xoá",
-        style: "destructive",
-        onPress: () => {
-          removeEvent(eventId);
-          showToast("Đã xoá sự kiện");
-        },
-      },
-    ]);
-  };
 
   const filteredEvents = useMemo(
     () =>
@@ -60,7 +42,12 @@ export default function EventsScreen() {
   }, [events]);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colors.background, paddingTop: insets.top },
+      ]}
+    >
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -160,7 +147,7 @@ export default function EventsScreen() {
                   )
                 </Text>
               </View>
-              <TouchableOpacity onPress={() => handleDeleteEvent(item.id)}>
+              <TouchableOpacity onPress={() => removeEvent(item.id)}>
                 <Text style={[styles.deleteText, { color: colors.danger }]}>
                   Xoá
                 </Text>

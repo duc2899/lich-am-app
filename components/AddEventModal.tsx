@@ -19,6 +19,7 @@ import {
 } from "../constants/eventCategories";
 import ToggleButton from "./ToggleButton";
 import { useTheme } from "../context/ThemeContext";
+import { useToastStore } from "../store/toastStore";
 
 type DateParts = { day: number; month: number; year: number };
 
@@ -38,6 +39,7 @@ export default function AddEventModal({
 }: Props) {
   const { colors } = useTheme();
   const addEvent = useEventStore((s) => s.addEvent);
+  const showToast = useToastStore((s) => s.showToast);
   const today = new Date();
   const fallbackSolar: DateParts = {
     day: today.getDate(),
@@ -167,7 +169,6 @@ export default function AddEventModal({
 
   const handleSave = async () => {
     if (!validate()) return;
-
     await addEvent({
       title: title.trim(),
       category,

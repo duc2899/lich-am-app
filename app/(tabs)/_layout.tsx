@@ -8,14 +8,8 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerTitleAlign: "center",
-        headerStyle: { backgroundColor: colors.surface },
-        headerTintColor: colors.text,
-        headerShadowVisible: false,
-        tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.border,
-        },
+        headerShown: false,
+        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSecondary,
       }}
@@ -24,9 +18,7 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: "Lịch",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calendar-outline" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <Ionicons name="calendar-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -42,18 +34,14 @@ export default function TabsLayout() {
         name="family"
         options={{
           title: "Gia phả",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="people-outline" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <Ionicons name="people-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: "Cài đặt",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="settings-outline" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <Ionicons name="settings-outline" size={size} color={color} />,
         }}
       />
     </Tabs>

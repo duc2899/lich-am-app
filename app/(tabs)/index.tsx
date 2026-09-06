@@ -6,11 +6,14 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { solarToLunar } from "../../constants/lunar";
 import { getSolarFestival, getLunarFestival } from "../../constants/festivals";
 import DayDetailModal, { DayInfo } from "../../components/DayDetailModal";
 import AddEventModal from "../../components/AddEventModal";
 import DailyQuoteCard from "../../components/DailyQuoteCard";
+import MonthYearPickerModal from "../../components/MonthYearPickerModal";
 import { useEventStore } from "../../store/eventStore";
 import { useTheme } from "../../context/ThemeContext";
 
@@ -28,12 +31,14 @@ function getFirstDayOfWeek(year: number, month: number) {
 
 export default function CalendarScreen() {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth() + 1);
   const [selectedDay, setSelectedDay] = useState<DayInfo | null>(null);
   const [addEventOpen, setAddEventOpen] = useState(false);
   const [eventPrefillDay, setEventPrefillDay] = useState<DayInfo | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const events = useEventStore((s) => s.events);
 
   const days: DayInfo[] = useMemo(() => {
@@ -123,16 +128,31 @@ export default function CalendarScreen() {
 
   return (
     <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
+      style={[
+        styles.container,
+        { backgroundColor: colors.background, paddingTop: insets.top },
+      ]}
     >
       <View style={styles.header}>
         <TouchableOpacity onPress={goPrevMonth} style={styles.navBtn}>
           <Text style={[styles.navText, { color: colors.text }]}>‹</Text>
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>
-            Tháng {month} - {year}
-          </Text>
+          <TouchableOpacity
+            style={[styles.monthPicker, { backgroundColor: colors.surface }]}
+            onPress={() => setPickerOpen(true)}
+            activeOpacity={0.6}
+          >
+            <Text style={[styles.headerTitle, { color: colors.text }]}>
+              Tháng {month} - {year}
+            </Text>
+            <Ionicons
+              name="chevron-down"
+              size={16}
+              color={colors.textSecondary}
+              style={styles.monthPickerIcon}
+            />
+          </TouchableOpacity>
           <TouchableOpacity
             onPress={goToToday}
             style={[styles.todayBtn, { backgroundColor: colors.surface }]}
@@ -275,6 +295,16 @@ export default function CalendarScreen() {
             : undefined
         }
       />
+      <MonthYearPickerModal
+        visible={pickerOpen}
+        month={month}
+        year={year}
+        onClose={() => setPickerOpen(false)}
+        onSelect={(m, y) => {
+          setMonth(m);
+          setYear(y);
+        }}
+      />
     </ScrollView>
   );
 }
@@ -291,6 +321,14 @@ const styles = StyleSheet.create({
   navBtn: { padding: 8 },
   navText: { fontSize: 24, fontWeight: "600" },
   headerCenter: { alignItems: "center" },
+  monthPicker: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 14,
+  },
+  monthPickerIcon: { marginLeft: 4 },
   headerTitle: { fontSize: 18, fontWeight: "700" },
   todayBtn: {
     marginTop: 4,
@@ -335,11 +373,8 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   legendRow: {
-    display: "flex",
     flexDirection: "row",
     gap: 16,
-    marginTop: 8,
-    marginBottom: 12,
     paddingHorizontal: 16,
     paddingVertical: 10,
   },

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { View } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -7,6 +8,7 @@ import Toast from "../components/Toast";
 import AppSplashScreen from "../components/AppSplashScreen";
 import OnboardingScreen from "../components/OnboardingScreen";
 import { ThemeProvider, useTheme } from "../context/ThemeContext";
+import { useEventStore } from "../store/eventStore";
 
 const ONBOARDING_KEY = "hasSeenOnboarding";
 
@@ -21,8 +23,21 @@ function AppContent({
   onFinishOnboarding: () => void;
 }) {
   const { isDark } = useTheme();
+  const resyncLunarNotifications = useEventStore(
+    (s) => s.resyncLunarNotifications,
+  );
   // "light" = icon trắng (dùng khi nền tối), "dark" = icon đen (dùng khi nền sáng)
   const statusBarStyle = isDark ? "light" : "dark";
+
+  const readyToUseApp = !showSplash && needsOnboarding === false;
+
+  // Mỗi lần thực sự vào được app (không phải lúc splash/onboarding) -> rà lại xem có
+  // sự kiện âm lịch nào cần tính lại ngày cho lần diễn ra kế tiếp không.
+  useEffect(() => {
+    if (readyToUseApp) {
+      resyncLunarNotifications();
+    }
+  }, [readyToUseApp]);
 
   if (showSplash || needsOnboarding === null) {
     return (
@@ -90,12 +105,14 @@ export default function RootLayout() {
   };
 
   return (
-    <ThemeProvider>
-      <AppContent
-        showSplash={showSplash}
-        needsOnboarding={needsOnboarding}
-        onFinishOnboarding={handleFinishOnboarding}
-      />
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <AppContent
+          showSplash={showSplash}
+          needsOnboarding={needsOnboarding}
+          onFinishOnboarding={handleFinishOnboarding}
+        />
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }

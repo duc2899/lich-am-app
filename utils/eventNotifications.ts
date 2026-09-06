@@ -1,9 +1,10 @@
 import * as Notifications from "expo-notifications";
 import type { EventItem } from "../store/eventStore";
 import { getCategoryByKey } from "../constants/eventCategories";
+import { solarToLunar, lunarToSolar } from "../constants/lunar";
 
-const REMINDER_DAYS_BEFORE = 3;
-const NOTIFY_HOUR = 9; // 9h sáng
+const REMINDER_DAYS_BEFORE = 2;
+const NOTIFY_HOUR = 7; // 9h sáng
 const NOTIFY_MINUTE = 0;
 
 Notifications.setNotificationHandler({
@@ -28,13 +29,8 @@ export async function requestNotificationPermission(): Promise<boolean> {
  * - "yearly": dùng trigger lặp lại hàng năm theo tháng/ngày có sẵn của expo-notifications
  *   (không cần tự tính lại mỗi năm, hệ thống tự lo).
  * - "once": tính đúng 1 lần theo ngày/tháng/năm cụ thể; nếu ngày báo đã qua thì bỏ qua.
- *
- * DEMO: chỉ hỗ trợ sự kiện dương lịch. Sự kiện âm lịch cần tính lại ngày dương mỗi năm
- * (do lệch ngày theo từng năm), sẽ làm ở bước sau.
  */
-export async function scheduleSolarEventNotification(
-  event: EventItem,
-): Promise<string | null> {
+export async function scheduleSolarEventNotification(event: EventItem): Promise<string | null> {
   if (event.calendarType !== "solar") return null;
 
   const granted = await requestNotificationPermission();
@@ -68,13 +64,7 @@ export async function scheduleSolarEventNotification(
   }
 
   // repeatType === "once"
-  const eventDate = new Date(
-    event.year,
-    event.month - 1,
-    event.day,
-    NOTIFY_HOUR,
-    NOTIFY_MINUTE,
-  );
+  const eventDate = new Date(event.year, event.month - 1, event.day, NOTIFY_HOUR, NOTIFY_MINUTE);
   const notifyDate = new Date(eventDate);
   notifyDate.setDate(notifyDate.getDate() - REMINDER_DAYS_BEFORE);
 
@@ -95,9 +85,81 @@ export async function scheduleSolarEventNotification(
   return id;
 }
 
-export async function cancelEventNotification(
-  notificationId: string,
-): Promise<void> {
+/**
+ * Tìm ngày DƯƠNG thật của lần diễn ra tiếp theo cho 1 ngày ÂM LỊCH cố định (day/month âm),
+ * bắt đầu tìm từ năm âm lịch hiện tại, thử tối đa vài năm liên tiếp cho tới khi ra được
+ * 1 ngày mà mốc "báo trước 3 ngày" vẫn còn ở tương lai.
+ */
+function getNextLunarOccurrence(lunarDay: number, lunarMonth: number): Date | null {
+  const today = new Date();
+  const todayLunar = solarToLunar(today.getDate(), today.getMonth() + 1, today.getFullYear());
+  let candidateLunarYear = todayLunar.year;
+
+  // Thử tối đa 3 năm liên tiếp -- thực tế chỉ cần 1-2 lần thử là ra, để dư phòng hờ
+  for (let i = 0; i < 3; i++) {
+    const solar = lunarToSolar(lunarDay, lunarMonth, candidateLunarYear, false);
+    const occurrenceDate = new Date(solar.year, solar.month - 1, solar.day, NOTIFY_HOUR, NOTIFY_MINUTE);
+    const reminderDate = new Date(occurrenceDate);
+    reminderDate.setDate(reminderDate.getDate() - REMINDER_DAYS_BEFORE);
+
+    if (reminderDate.getTime() > Date.now()) {
+      return occurrenceDate;
+    }
+    candidateLunarYear++;
+  }
+  return null;
+}
+
+/**
+ * Đặt lịch thông báo báo trước 3 ngày cho 1 sự kiện ÂM LỊCH.
+ * Khác với dương lịch: KHÔNG dùng trigger lặp lại được (vì ngày dương ứng với 1 ngày âm
+ * lệch nhau mỗi năm) -- chỉ đặt được 1 lần cho ĐÚNG lần diễn ra tiếp theo. Trả về kèm
+ * `targetTimestamp` (thời điểm sự kiện thật sẽ diễn ra) để sau này biết khi nào cần
+ * tính lại và đặt lịch cho lần kế tiếp (xem resyncLunarNotifications trong eventStore).
+ */
+export async function scheduleLunarEventNotification(
+  event: EventItem
+): Promise<{ notificationId: string; targetTimestamp: number } | null> {
+  if (event.calendarType !== "lunar") return null;
+
+  const granted = await requestNotificationPermission();
+  if (!granted) return null;
+
+  const categoryLabel = getCategoryByKey(event.category).label;
+
+  let occurrenceDate: Date | null;
+  if (event.repeatType === "yearly") {
+    occurrenceDate = getNextLunarOccurrence(event.day, event.month);
+  } else {
+    // "once": đã biết đúng năm âm lịch cụ thể, quy đổi thẳng sang ngày dương
+    const solar = lunarToSolar(event.day, event.month, event.year, false);
+    occurrenceDate = new Date(solar.year, solar.month - 1, solar.day, NOTIFY_HOUR, NOTIFY_MINUTE);
+  }
+
+  if (!occurrenceDate) return null;
+
+  const notifyDate = new Date(occurrenceDate);
+  notifyDate.setDate(notifyDate.getDate() - REMINDER_DAYS_BEFORE);
+
+  if (notifyDate.getTime() <= Date.now()) {
+    return null; // ngày báo đã qua (chỉ xảy ra với "once") -> không đặt nữa
+  }
+
+  const id = await Notifications.scheduleNotificationAsync({
+    content: {
+      title: `Sắp tới: ${event.title}`,
+      body: `Còn ${REMINDER_DAYS_BEFORE} ngày nữa là đến ${event.day}/${event.month} âm lịch (${categoryLabel})`,
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DATE,
+      date: notifyDate,
+    },
+  });
+
+  return { notificationId: id, targetTimestamp: occurrenceDate.getTime() };
+}
+
+export async function cancelEventNotification(notificationId: string): Promise<void> {
   try {
     await Notifications.cancelScheduledNotificationAsync(notificationId);
   } catch {
@@ -114,9 +176,7 @@ export async function cancelAllEventNotifications(): Promise<void> {
  * Giúp kiểm tra nhanh xem quyền + pipeline thông báo có hoạt động không, khỏi phải đợi
  * thật 3 ngày hay chỉnh ngày giờ máy.
  */
-export async function scheduleTestNotification(
-  seconds: number = 10,
-): Promise<string | null> {
+export async function scheduleTestNotification(seconds: number = 10): Promise<string | null> {
   const granted = await requestNotificationPermission();
   if (!granted) return null;
 

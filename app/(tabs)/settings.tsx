@@ -6,6 +6,7 @@ import {
   Alert,
   Linking,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import Constants from "expo-constants";
 import SettingsSection from "../../components/SettingsSection";
@@ -25,6 +26,7 @@ import {
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const clearFamilyData = useFamilyStore((s) => s.clearAll);
   const clearAllEvents = useEventStore((s) => s.clearAllEvents);
   const notificationsEnabled = useSettingsStore((s) => s.notificationsEnabled);
@@ -132,7 +134,10 @@ export default function SettingsScreen() {
 
   return (
     <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
+      style={[
+        styles.container,
+        { backgroundColor: colors.background, paddingTop: insets.top },
+      ]}
       contentContainerStyle={styles.content}
     >
       {/* Hồ sơ: ưu tiên hiển thị thông tin tài khoản đăng nhập (tên, email).

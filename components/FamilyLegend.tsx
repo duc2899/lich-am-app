@@ -32,7 +32,7 @@ export default function FamilyLegend() {
 const styles = StyleSheet.create({
   box: {
     position: "absolute",
-    top: 12,
+    top: 70,
     left: 12,
     borderRadius: 10,
     paddingVertical: 8,

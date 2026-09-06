@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   hint: {
     position: "absolute",
-    bottom: 16,
+    bottom: 6,
     alignSelf: "center",
     fontSize: 11,
     paddingHorizontal: 10,
