@@ -94,9 +94,7 @@ function SunLongitude(jdn: number): number {
   const M = 357.5291 + 35999.0503 * T - 0.0001559 * T2 - 0.00000048 * T * T2;
   const L0 = 280.46645 + 36000.76983 * T + 0.0003032 * T2;
   let DL = (1.9146 - 0.004817 * T - 0.000014 * T2) * Math.sin(dr * M);
-  DL +=
-    (0.019993 - 0.000101 * T) * Math.sin(dr * 2 * M) +
-    0.00029 * Math.sin(dr * 3 * M);
+  DL += (0.019993 - 0.000101 * T) * Math.sin(dr * 2 * M) + 0.00029 * Math.sin(dr * 3 * M);
   let L = L0 + DL;
   L *= dr;
   L -= Math.PI * 2 * INT(L / (Math.PI * 2));
@@ -175,20 +173,14 @@ export function solarToLunar(dd: number, mm: number, yy: number): LunarDate {
   if (lunarMonth > 12) lunarMonth -= 12;
   if (lunarMonth >= 11 && diff < 4) lunarYear -= 1;
 
-  return {
-    day: lunarDay,
-    month: lunarMonth,
-    year: lunarYear,
-    leap: lunarLeap,
-    jd: dayNumber,
-  };
+  return { day: lunarDay, month: lunarMonth, year: lunarYear, leap: lunarLeap, jd: dayNumber };
 }
 
 export function lunarToSolar(
   lunarDay: number,
   lunarMonth: number,
   lunarYear: number,
-  lunarLeap: boolean = false,
+  lunarLeap: boolean = false
 ): { day: number; month: number; year: number } {
   let a11: number, b11: number;
   if (lunarMonth < 11) {
@@ -219,35 +211,16 @@ export function lunarToSolar(
 }
 
 // ---- Can Chi (Thiên Can - Địa Chi) ----
-const CAN = [
-  "Giáp",
-  "Ất",
-  "Bính",
-  "Đinh",
-  "Mậu",
-  "Kỷ",
-  "Canh",
-  "Tân",
-  "Nhâm",
-  "Quý",
-];
-const CHI = [
-  "Tý",
-  "Sửu",
-  "Dần",
-  "Mão",
-  "Thìn",
-  "Tỵ",
-  "Ngọ",
-  "Mùi",
-  "Thân",
-  "Dậu",
-  "Tuất",
-  "Hợi",
-];
+const CAN = ["Giáp", "Ất", "Bính", "Đinh", "Mậu", "Kỷ", "Canh", "Tân", "Nhâm", "Quý"];
+const CHI = ["Tý", "Sửu", "Dần", "Mão", "Thìn", "Tỵ", "Ngọ", "Mùi", "Thân", "Dậu", "Tuất", "Hợi"];
 
 export function getYearCanChi(lunarYear: number): string {
   return `${CAN[(lunarYear + 6) % 10]} ${CHI[(lunarYear + 8) % 12]}`;
+}
+
+// Chỉ lấy tên con giáp (Địa Chi) của 1 năm, dùng cho thống kê "Con giáp" -- không cần Can đi kèm
+export function getChiOfYear(year: number): string {
+  return CHI[(year + 8) % 12];
 }
 
 export function getDayCanChi(jd: number): string {
@@ -261,15 +234,7 @@ export function getMonthCanChi(lunarMonth: number, lunarYear: number): string {
   return `${CAN[canIdx]} ${CHI[chiIdx]}`;
 }
 
-const WEEKDAY_NAMES = [
-  "Chủ Nhật",
-  "Thứ Hai",
-  "Thứ Ba",
-  "Thứ Tư",
-  "Thứ Năm",
-  "Thứ Sáu",
-  "Thứ Bảy",
-];
+const WEEKDAY_NAMES = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
 
 export function getWeekdayName(dd: number, mm: number, yy: number): string {
   return WEEKDAY_NAMES[new Date(yy, mm - 1, dd).getDay()];

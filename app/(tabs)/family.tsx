@@ -16,10 +16,18 @@ import { computeTruongLineage } from "../../utils/familyLineage";
 import { useFamilyStore } from "../../store/familyStore";
 import { useToastStore } from "../../store/toastStore";
 import { Person } from "../../types/family";
+import FamilyStatisticsView from "../../components/FamilyStatisticsView";
+import SubTabBar from "../../components/SubTabBar";
+import { computeFamilyStatistics } from "../../utils/familyStatistics";
+import MemoryGalleryView from "../../components/MemoryGalleryView";
+
 import { useTheme } from "../../context/ThemeContext";
 
 export default function FamilyScreen() {
   const { colors } = useTheme();
+  const [activeSubTab, setActiveSubTab] = useState<
+    "stats" | "diagram" | "gallery"
+  >("diagram");
   const persons = useFamilyStore((s) => s.persons);
   const families = useFamilyStore((s) => s.families);
   const rootPersonId = useFamilyStore((s) => s.rootPersonId);
@@ -34,6 +42,11 @@ export default function FamilyScreen() {
   const [addChildFamilyId, setAddChildFamilyId] = useState<string | null>(null);
   const [addSpousePerson, setAddSpousePerson] = useState<Person | null>(null);
   const [editPerson, setEditPerson] = useState<Person | null>(null);
+
+  const statistics = useMemo(
+    () => computeFamilyStatistics(rootPersonId, persons, families),
+    [persons, families, rootPersonId],
+  );
 
   const rootNode = useMemo(
     () =>
@@ -117,17 +130,37 @@ export default function FamilyScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <FamilyTreeView
-        root={rootNode}
-        onPersonPress={handlePersonPress}
-        onAddChildPress={handleAddChildPress}
-        truongIds={truongIds}
-        mePersonId={mePersonId}
+      <SubTabBar
+        tabs={[
+          { key: "stats", label: "Thống kê", icon: "📊" },
+          { key: "diagram", label: "Sơ đồ", icon: "🌳" },
+          { key: "gallery", label: "Trưng bày", icon: "🖼️" },
+        ]}
+        activeKey={activeSubTab}
+        onChange={(key) =>
+          setActiveSubTab(key as "stats" | "diagram" | "gallery")
+        }
       />
-      <FamilyLegend />
-      <Text style={[styles.hint, { color: colors.textSecondary, backgroundColor: colors.surface }]}>
-        Chụm 2 ngón tay để zoom · Bấm + trên dây nối để thêm con
-      </Text>
+
+      {activeSubTab === "stats" ? (
+        <FamilyStatisticsView stats={statistics} />
+      ) : activeSubTab === "gallery" ? (
+        <MemoryGalleryView />
+      ) : (
+        <>
+          <FamilyTreeView
+            root={rootNode}
+            onPersonPress={handlePersonPress}
+            onAddChildPress={handleAddChildPress}
+            truongIds={truongIds}
+            mePersonId={mePersonId}
+          />
+          <FamilyLegend />
+          <Text style={styles.hint}>
+            Chụm 2 ngón tay để zoom · Bấm + trên dây nối để thêm con
+          </Text>
+        </>
+      )}
 
       <PersonDetailModal
         person={selectedPerson}
