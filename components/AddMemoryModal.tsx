@@ -16,6 +16,8 @@ import * as ImagePicker from "expo-image-picker";
 import { useMemoryStore, MemoryItem } from "../store/memoryStore";
 import { useToastStore } from "../store/toastStore";
 import { useTheme } from "../context/ThemeContext";
+import DateInputFields from "./DateInputFields";
+import { validateDateParts } from "../utils/dateValidation";
 
 type Props = {
   visible: boolean;
@@ -85,6 +87,11 @@ export default function AddMemoryModal({
     }
     if (!title.trim()) {
       setError("Vui lòng nhập tiêu đề");
+      return;
+    }
+    const dateError = validateDateParts(day, month, year);
+    if (dateError) {
+      setError(dateError);
       return;
     }
 
@@ -181,56 +188,25 @@ export default function AddMemoryModal({
                 }}
               />
 
-              <Text style={[styles.label, { color: colors.textSecondary }]}>
-                Ngày diễn ra (không bắt buộc)
-              </Text>
-              <View style={styles.dateRow}>
-                <TextInput
-                  style={[
-                    styles.dateInput,
-                    {
-                      borderColor: colors.border,
-                      color: colors.text,
-                      backgroundColor: colors.surface,
-                    },
-                  ]}
-                  placeholder="Ngày"
-                  placeholderTextColor={colors.textSecondary}
-                  keyboardType="number-pad"
-                  value={day}
-                  onChangeText={setDay}
-                />
-                <TextInput
-                  style={[
-                    styles.dateInput,
-                    {
-                      borderColor: colors.border,
-                      color: colors.text,
-                      backgroundColor: colors.surface,
-                    },
-                  ]}
-                  placeholder="Tháng"
-                  placeholderTextColor={colors.textSecondary}
-                  keyboardType="number-pad"
-                  value={month}
-                  onChangeText={setMonth}
-                />
-                <TextInput
-                  style={[
-                    styles.dateInput,
-                    {
-                      borderColor: colors.border,
-                      color: colors.text,
-                      backgroundColor: colors.surface,
-                    },
-                  ]}
-                  placeholder="Năm"
-                  placeholderTextColor={colors.textSecondary}
-                  keyboardType="number-pad"
-                  value={year}
-                  onChangeText={setYear}
-                />
-              </View>
+              <DateInputFields
+                label="Ngày diễn ra"
+                day={day}
+                month={month}
+                year={year}
+                onChangeDay={(v) => {
+                  setDay(v);
+                  setError("");
+                }}
+                onChangeMonth={(v) => {
+                  setMonth(v);
+                  setError("");
+                }}
+                onChangeYear={(v) => {
+                  setYear(v);
+                  setError("");
+                }}
+                hasError={!!error}
+              />
 
               <Text style={[styles.label, { color: colors.textSecondary }]}>
                 Nội dung kỷ niệm
@@ -316,15 +292,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 10,
     marginBottom: 16,
-    fontSize: 14,
-  },
-  dateRow: { flexDirection: "row", gap: 8, marginBottom: 16 },
-  dateInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 10,
-    textAlign: "center",
     fontSize: 14,
   },
   textArea: {

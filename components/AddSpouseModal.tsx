@@ -14,6 +14,8 @@ import { useFamilyStore } from "../store/familyStore";
 import { useToastStore } from "../store/toastStore";
 import { Gender, Person } from "../types/family";
 import ToggleButton from "./ToggleButton";
+import DateInputFields from "./DateInputFields";
+import { validateDateParts, parseDateParts } from "../utils/dateValidation";
 import { useTheme } from "../context/ThemeContext";
 
 type Props = {
@@ -28,13 +30,17 @@ export default function AddSpouseModal({ visible, person, onClose }: Props) {
   const showToast = useToastStore((s) => s.showToast);
   const [fullName, setFullName] = useState("");
   const [gender, setGender] = useState<Gender>("female");
+  const [birthDay, setBirthDay] = useState("");
+  const [birthMonth, setBirthMonth] = useState("");
   const [birthYear, setBirthYear] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (visible && person) {
       setFullName("");
-      setGender(person.gender === "male" ? "female" : "male"); // mặc định ngược giới tính người hiện tại
+      setGender(person.gender === "male" ? "female" : "male");
+      setBirthDay("");
+      setBirthMonth("");
       setBirthYear("");
       setError("");
     }
@@ -45,21 +51,27 @@ export default function AddSpouseModal({ visible, person, onClose }: Props) {
       setError("Vui lòng nhập họ tên");
       return;
     }
-    if (!birthYear.trim()) {
-      setError("Vui lòng nhập năm sinh");
-      return;
-    }
-    const y = Number(birthYear);
-    if (!Number.isInteger(y) || y < 1900 || y > new Date().getFullYear()) {
-      setError("Năm sinh không hợp lệ");
+    const dateError = validateDateParts(birthDay, birthMonth, birthYear, {
+      yearRequired: true,
+      fieldLabel: "sinh",
+    });
+    if (dateError) {
+      setError(dateError);
       return;
     }
     if (!person) return;
 
+    const { day, month, year } = parseDateParts(
+      birthDay,
+      birthMonth,
+      birthYear,
+    );
     addSpouse(person.id, {
       fullName: fullName.trim(),
       gender,
-      birthYear: y,
+      birthDay: day,
+      birthMonth: month,
+      birthYear: year,
     });
     showToast(`Đã thêm "${fullName.trim()}" làm vợ/chồng`);
     onClose();
@@ -83,19 +95,20 @@ export default function AddSpouseModal({ visible, person, onClose }: Props) {
             onPress={(e) => e.stopPropagation()}
           >
             <Text style={[styles.heading, { color: colors.text }]}>
-              Thêm vợ/chồng cho {person?.fullName ?? ""}
+              Thêm {gender === "male" ? "chồng" : "vợ"} cho {person?.fullName ?? ""}
             </Text>
 
             <TextInput
               style={[
                 styles.input,
                 {
-                  backgroundColor: colors.background,
-                  color: colors.text,
                   borderColor: colors.border,
+                  color: colors.text,
+                  backgroundColor: colors.surface,
                 },
               ]}
               placeholder="Họ và tên"
+              placeholderTextColor={colors.textSecondary}
               value={fullName}
               onChangeText={(v) => {
                 setFullName(v);
@@ -103,49 +116,66 @@ export default function AddSpouseModal({ visible, person, onClose }: Props) {
               }}
             />
 
-            <Text style={[styles.label, { color: colors.text }]}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>
               Giới tính
             </Text>
             <View style={styles.toggleRow}>
               <ToggleButton
+                disabled={gender === "female"}
+                color={colors.male}
                 active={gender === "male"}
                 label="Nam ♂"
                 onPress={() => setGender("male")}
               />
               <ToggleButton
+                disabled={gender === "male"}
+                color={colors.female}
                 active={gender === "female"}
                 label="Nữ ♀"
                 onPress={() => setGender("female")}
               />
             </View>
 
-            <Text style={[styles.label, { color: colors.text }]}>Năm sinh *</Text>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.background,
-                  color: colors.text,
-                  borderColor: colors.border,
-                },
-              ]}
-              placeholder="vd: 1975"
-              keyboardType="number-pad"
-              value={birthYear}
-              onChangeText={(v) => {
+            <DateInputFields
+              label="Ngày sinh"
+              yearRequired
+              day={birthDay}
+              month={birthMonth}
+              year={birthYear}
+              onChangeDay={(v) => {
+                setBirthDay(v);
+                setError("");
+              }}
+              onChangeMonth={(v) => {
+                setBirthMonth(v);
+                setError("");
+              }}
+              onChangeYear={(v) => {
                 setBirthYear(v);
                 setError("");
               }}
+              hasError={!!error}
             />
 
-            {error !== "" && <Text style={styles.errorText}>{error}</Text>}
+            {error !== "" && (
+              <Text style={[styles.errorText, { color: colors.danger }]}>
+                {error}
+              </Text>
+            )}
 
             <View style={styles.actionRow}>
               <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
-                <Text style={[styles.cancelText, { color: colors.text }]}>Huỷ</Text>
+                <Text
+                  style={[styles.cancelText, { color: colors.textSecondary }]}
+                >
+                  Huỷ
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-                <Text style={[styles.saveText]}>Lưu</Text>
+              <TouchableOpacity
+                style={[styles.saveBtn, { backgroundColor: colors.primary }]}
+                onPress={handleSave}
+              >
+                <Text style={styles.saveText}>Lưu</Text>
               </TouchableOpacity>
             </View>
           </Pressable>
@@ -161,11 +191,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "flex-end",
   },
-  card: {
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    padding: 20,
-  },
+  card: { borderTopLeftRadius: 16, borderTopRightRadius: 16, padding: 20 },
   heading: { fontSize: 17, fontWeight: "700", marginBottom: 16 },
   input: {
     borderWidth: 1,
@@ -174,17 +200,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     fontSize: 14,
   },
-  label: { fontSize: 13,  marginBottom: 8, fontWeight: "600" },
+  label: { fontSize: 13, marginBottom: 8, fontWeight: "600" },
   toggleRow: { flexDirection: "row", gap: 8, marginBottom: 16 },
-  errorText: { fontSize: 12, color: "#D9364A", marginBottom: 12 },
+  errorText: { fontSize: 12, marginBottom: 12 },
   actionRow: { flexDirection: "row", justifyContent: "flex-end", gap: 12 },
   cancelBtn: { paddingHorizontal: 16, paddingVertical: 10 },
-  cancelText: { color: "#888", fontWeight: "600" },
-  saveBtn: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    backgroundColor: "#4A90D9",
-    borderRadius: 8,
-  },
+  cancelText: { fontWeight: "600" },
+  saveBtn: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 },
   saveText: { color: "#fff", fontWeight: "700" },
 });

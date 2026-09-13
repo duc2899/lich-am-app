@@ -4,17 +4,22 @@ import { useTheme } from "../context/ThemeContext";
 export default function FamilyLegend() {
   const { colors } = useTheme();
   return (
-    <View style={[styles.box, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+    <View
+      style={[
+        styles.box,
+        { backgroundColor: colors.surface, borderColor: colors.border },
+      ]}
+    >
       <View style={styles.row}>
         <Text style={styles.crownIcon}>👑</Text>
         <Text style={[styles.label, { color: colors.text }]}>Trưởng</Text>
       </View>
       <View style={styles.row}>
-        <View style={[styles.dot, { backgroundColor: "#4A90D9" }]} />
+        <View style={[styles.dot, { backgroundColor: colors.male }]} />
         <Text style={[styles.label, { color: colors.text }]}>Nam</Text>
       </View>
       <View style={styles.row}>
-        <View style={[styles.dot, { backgroundColor: "#D96BA0" }]} />
+        <View style={[styles.dot, { backgroundColor: colors.female }]} />
         <Text style={[styles.label, { color: colors.text }]}>Nữ</Text>
       </View>
       <View style={styles.row}>

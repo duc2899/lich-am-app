@@ -38,7 +38,7 @@ function isMarriedIn(person: Person, personMap: Map<string, Person>, familyMap: 
  * được tính CÙNG đời với người đó (vì 1 "đời" thường tính theo cặp vợ chồng), con cái
  * của họ ở đời kế tiếp. Duyệt theo kiểu BFS từ gốc cây lan toả dần ra.
  */
-function computeGenerations(
+export function computeGenerations(
     rootPersonId: string,
     persons: Person[],
     families: Family[]

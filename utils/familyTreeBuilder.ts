@@ -26,7 +26,7 @@ export type DisplayNode = {
 export function buildDisplayTree(
   rootPersonId: string,
   persons: Person[],
-  families: Family[],
+  families: Family[]
 ): DisplayNode | null {
   const personMap = new Map(persons.map((p) => [p.id, p]));
   const familyMap = new Map(families.map((f) => [f.id, f]));
@@ -56,20 +56,14 @@ export function buildDisplayTree(
       marriages.push({ familyId: fam.id, spouse, children });
     }
 
-    return {
-      id: person.id,
-      multiMarriage: { anchor: person, marriages },
-      children: [],
-    };
+    return { id: person.id, multiMarriage: { anchor: person, marriages }, children: [] };
   }
 
   function buildFromFamily(familyId: string): DisplayNode | null {
     const family = familyMap.get(familyId);
     if (!family) return null;
 
-    const husband = family.husbandId
-      ? personMap.get(family.husbandId)
-      : undefined;
+    const husband = family.husbandId ? personMap.get(family.husbandId) : undefined;
     const wife = family.wifeId ? personMap.get(family.wifeId) : undefined;
 
     const children = family.childrenIds
@@ -99,14 +93,54 @@ export function getNodeChildren(node: DisplayNode): DisplayNode[] {
     return node.multiMarriage.marriages.flatMap((m) =>
       m.children.length > 0
         ? m.children
-        : [
-            {
-              id: `__placeholder_${m.familyId}`,
-              children: [],
-              isPlaceholder: true,
-            },
-          ],
+        : [{ id: `__placeholder_${m.familyId}`, children: [], isPlaceholder: true }]
     );
   }
   return node.children;
+}
+
+/**
+ * Tìm toàn bộ family id (cuộc hôn nhân) CÓ con thật, tính từ cây gốc CHƯA bị cắt bởi trạng thái
+ * thu gọn -- dùng để quyết định "family này có nên hiện nút thu gọn/mở rộng hay không" (family
+ * không có con nào thì không có gì để thu gọn cả, không cần vẽ nút).
+ */
+export function collectExpandableFamilyIds(node: DisplayNode, result: Set<string> = new Set()): Set<string> {
+  if (node.multiMarriage) {
+    for (const m of node.multiMarriage.marriages) {
+      if (m.children.length > 0) result.add(m.familyId);
+      for (const child of m.children) collectExpandableFamilyIds(child, result);
+    }
+  } else {
+    if (node.children.length > 0) result.add(node.id); // với husband/wife, node.id chính là family id
+    for (const child of node.children) collectExpandableFamilyIds(child, result);
+  }
+  return result;
+}
+
+/**
+ * Trả về 1 cây MỚI (không sửa cây gốc) với children của mọi family đang bị thu gọn được thay
+ * bằng mảng rỗng -- ẩn hẳn toàn bộ hậu duệ phía dưới family đó khỏi hiển thị, nhưng vẫn giữ
+ * nguyên chính vợ/chồng đang đứng ở family đó (chỉ ẩn CON, không ẩn cha/mẹ).
+ */
+export function pruneCollapsedFamilies(node: DisplayNode, collapsedFamilyIds: Set<string>): DisplayNode {
+  if (node.multiMarriage) {
+    return {
+      ...node,
+      multiMarriage: {
+        ...node.multiMarriage,
+        marriages: node.multiMarriage.marriages.map((m) => ({
+          ...m,
+          children: collapsedFamilyIds.has(m.familyId)
+            ? []
+            : m.children.map((c) => pruneCollapsedFamilies(c, collapsedFamilyIds)),
+        })),
+      },
+    };
+  }
+  return {
+    ...node,
+    children: collapsedFamilyIds.has(node.id)
+      ? []
+      : node.children.map((c) => pruneCollapsedFamilies(c, collapsedFamilyIds)),
+  };
 }

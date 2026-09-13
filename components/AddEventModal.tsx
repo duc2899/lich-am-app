@@ -18,6 +18,7 @@ import {
   EventCategoryKey,
 } from "../constants/eventCategories";
 import ToggleButton from "./ToggleButton";
+import DateInputFields from "./DateInputFields";
 import { useTheme } from "../context/ThemeContext";
 import { useToastStore } from "../store/toastStore";
 
@@ -169,7 +170,8 @@ export default function AddEventModal({
 
   const handleSave = async () => {
     if (!validate()) return;
-    await addEvent({
+
+    const result = await addEvent({
       title: title.trim(),
       category,
       calendarType,
@@ -178,6 +180,21 @@ export default function AddEventModal({
       year: Number(year),
       repeatType,
     });
+
+    if (result.notificationScheduledAt === null) {
+      showToast(
+        "Đã lưu sự kiện, nhưng CHƯA đặt được thông báo (có thể do chưa cấp quyền, hoặc ngày báo đã ở quá khứ)",
+        "warning",
+      );
+    } else if (result.notificationScheduledAt === -1) {
+      showToast("Đã lưu sự kiện và đặt lịch nhắc hàng năm thành công");
+    } else {
+      const d = new Date(result.notificationScheduledAt);
+      showToast(
+        `Đã lưu sự kiện. Lần diễn ra tiếp theo: ${d.toLocaleDateString("vi-VN")} (thông báo sẽ báo trước theo số ngày đã cấu hình)`,
+      );
+    }
+
     onClose();
   };
 
@@ -292,64 +309,27 @@ export default function AddEventModal({
               />
             </View>
 
-            <Text style={[styles.label, { color: colors.textSecondary }]}>
-              Ngày / Tháng / Năm ({calendarType === "lunar" ? "âm" : "dương"})
-            </Text>
-            <View style={styles.dateRow}>
-              <TextInput
-                style={[
-                  styles.dateInput,
-                  {
-                    borderColor: colors.border,
-                    color: colors.text,
-                    backgroundColor: colors.surface,
-                  },
-                  errors.day && { borderColor: colors.danger },
-                ]}
-                keyboardType="number-pad"
-                value={day}
-                onChangeText={(v) => {
-                  setDay(v);
-                  if (errors.day) setErrors((e) => ({ ...e, day: undefined }));
-                }}
-              />
-              <TextInput
-                style={[
-                  styles.dateInput,
-                  {
-                    borderColor: colors.border,
-                    color: colors.text,
-                    backgroundColor: colors.surface,
-                  },
-                  errors.month && { borderColor: colors.danger },
-                ]}
-                keyboardType="number-pad"
-                value={month}
-                onChangeText={(v) => {
-                  setMonth(v);
-                  if (errors.month)
-                    setErrors((e) => ({ ...e, month: undefined }));
-                }}
-              />
-              <TextInput
-                style={[
-                  styles.dateInput,
-                  {
-                    borderColor: colors.border,
-                    color: colors.text,
-                    backgroundColor: colors.surface,
-                  },
-                  errors.year && { borderColor: colors.danger },
-                ]}
-                keyboardType="number-pad"
-                value={year}
-                onChangeText={(v) => {
-                  setYear(v);
-                  if (errors.year)
-                    setErrors((e) => ({ ...e, year: undefined }));
-                }}
-              />
-            </View>
+            <DateInputFields
+              label={`Ngày / Tháng / Năm (${calendarType === "lunar" ? "âm" : "dương"})`}
+              yearRequired
+              day={day}
+              month={month}
+              year={year}
+              onChangeDay={(v) => {
+                setDay(v);
+                if (errors.day) setErrors((e) => ({ ...e, day: undefined }));
+              }}
+              onChangeMonth={(v) => {
+                setMonth(v);
+                if (errors.month)
+                  setErrors((e) => ({ ...e, month: undefined }));
+              }}
+              onChangeYear={(v) => {
+                setYear(v);
+                if (errors.year) setErrors((e) => ({ ...e, year: undefined }));
+              }}
+              hasError={!!(errors.day || errors.month || errors.year)}
+            />
             {(errors.day || errors.month || errors.year) && (
               <Text style={[styles.errorText, { color: colors.danger }]}>
                 {errors.day || errors.month || errors.year}
@@ -409,14 +389,6 @@ const styles = StyleSheet.create({
   categoryLabel: { fontSize: 11, fontWeight: "600" },
   categoryLabelActive: { color: "#fff" },
   toggleRow: { flexDirection: "row", gap: 8, marginBottom: 16 },
-  dateRow: { flexDirection: "row", gap: 8, marginBottom: 20 },
-  dateInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 10,
-    textAlign: "center",
-  },
   actionRow: { flexDirection: "row", justifyContent: "flex-end", gap: 12 },
   cancelBtn: { paddingHorizontal: 16, paddingVertical: 10 },
   cancelText: { fontWeight: "600" },

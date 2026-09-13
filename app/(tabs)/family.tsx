@@ -7,7 +7,11 @@ import AddSpouseModal from "../../components/AddSpouseModal";
 import EditPersonModal from "../../components/EditPersonModal";
 import FamilyLegend from "../../components/FamilyLegend";
 import FamilyStartScreen from "../../components/FamilyStartScreen";
-import { buildDisplayTree } from "../../utils/familyTreeBuilder";
+import {
+  buildDisplayTree,
+  collectExpandableFamilyIds,
+  pruneCollapsedFamilies,
+} from "../../utils/familyTreeBuilder";
 import {
   getPersonRelations,
   PersonRelations,
@@ -28,6 +32,9 @@ export default function FamilyScreen() {
   const [activeSubTab, setActiveSubTab] = useState<
     "stats" | "diagram" | "gallery"
   >("diagram");
+  const [collapsedFamilyIds, setCollapsedFamilyIds] = useState<Set<string>>(
+    new Set(),
+  );
   const persons = useFamilyStore((s) => s.persons);
   const families = useFamilyStore((s) => s.families);
   const rootPersonId = useFamilyStore((s) => s.rootPersonId);
@@ -48,12 +55,36 @@ export default function FamilyScreen() {
     [persons, families, rootPersonId],
   );
 
-  const rootNode = useMemo(
+  const fullRootNode = useMemo(
     () =>
       rootPersonId ? buildDisplayTree(rootPersonId, persons, families) : null,
     [persons, families, rootPersonId],
   );
 
+  const expandableFamilyIds = useMemo(
+    () =>
+      fullRootNode
+        ? collectExpandableFamilyIds(fullRootNode)
+        : new Set<string>(),
+    [fullRootNode],
+  );
+
+  const rootNode = useMemo(
+    () =>
+      fullRootNode
+        ? pruneCollapsedFamilies(fullRootNode, collapsedFamilyIds)
+        : null,
+    [fullRootNode, collapsedFamilyIds],
+  );
+
+  const handleToggleCollapse = (familyId: string) => {
+    setCollapsedFamilyIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(familyId)) next.delete(familyId);
+      else next.add(familyId);
+      return next;
+    });
+  };
   const truongIds = useMemo(
     () =>
       new Set(
@@ -150,10 +181,13 @@ export default function FamilyScreen() {
         <>
           <FamilyTreeView
             root={rootNode}
+            persons={persons}
             onPersonPress={handlePersonPress}
-            onAddChildPress={handleAddChildPress}
             truongIds={truongIds}
             mePersonId={mePersonId}
+            expandableFamilyIds={expandableFamilyIds}
+            collapsedFamilyIds={collapsedFamilyIds}
+            onToggleCollapse={handleToggleCollapse}
           />
           <FamilyLegend />
           <Text style={styles.hint}>
@@ -164,13 +198,20 @@ export default function FamilyScreen() {
 
       <PersonDetailModal
         person={selectedPerson}
-        relations={selectedRelations}
+        persons={persons}
+        families={families}
+        rootPersonId={rootPersonId}
+        truongIds={truongIds}
+        mePersonId={mePersonId}
         onClose={() => setSelectedPerson(null)}
+        onNavigateToPerson={handlePersonPress}
         onAddSpouse={handleAddSpouseFromDetail}
+        onAddChild={(familyId) => {
+          setSelectedPerson(null);
+          setAddChildFamilyId(familyId);
+        }}
         onEdit={handleEditFromDetail}
         onDelete={handleDelete}
-        isTruong={selectedPerson ? truongIds.has(selectedPerson.id) : false}
-        isMe={selectedPerson ? mePersonId === selectedPerson.id : false}
         onToggleMe={handleToggleMe}
       />
 

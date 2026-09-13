@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Modal,
   Pressable,
+  ScrollView,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
@@ -14,6 +15,8 @@ import { useFamilyStore } from "../store/familyStore";
 import { useToastStore } from "../store/toastStore";
 import { Gender, Person } from "../types/family";
 import ToggleButton from "./ToggleButton";
+import DateInputFields from "./DateInputFields";
+import { validateDateParts } from "../utils/dateValidation";
 import { useTheme } from "../context/ThemeContext";
 
 type Props = {
@@ -26,21 +29,33 @@ export default function EditPersonModal({ visible, person, onClose }: Props) {
   const { colors } = useTheme();
   const editPerson = useFamilyStore((s) => s.editPerson);
   const showToast = useToastStore((s) => s.showToast);
+
   const [fullName, setFullName] = useState("");
   const [gender, setGender] = useState<Gender>("male");
+  const [birthDay, setBirthDay] = useState("");
+  const [birthMonth, setBirthMonth] = useState("");
   const [birthYear, setBirthYear] = useState("");
   const [deathYear, setDeathYear] = useState("");
   const [isDeceased, setIsDeceased] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [occupation, setOccupation] = useState("");
+  const [currentAddress, setCurrentAddress] = useState("");
+  const [note, setNote] = useState("");
   const [error, setError] = useState("");
 
-  // Prefill lại data mỗi khi mở modal cho 1 người khác nhau
   useEffect(() => {
     if (visible && person) {
       setFullName(person.fullName);
       setGender(person.gender);
+      setBirthDay(person.birthDay ? String(person.birthDay) : "");
+      setBirthMonth(person.birthMonth ? String(person.birthMonth) : "");
       setBirthYear(person.birthYear ? String(person.birthYear) : "");
       setDeathYear(person.deathYear ? String(person.deathYear) : "");
       setIsDeceased(!!person.deathYear);
+      setPhone(person.phone ?? "");
+      setOccupation(person.occupation ?? "");
+      setCurrentAddress(person.currentAddress ?? "");
+      setNote(person.note ?? "");
       setError("");
     }
   }, [visible, person]);
@@ -52,26 +67,24 @@ export default function EditPersonModal({ visible, person, onClose }: Props) {
       setError("Vui lòng nhập họ tên");
       return false;
     }
-    const by = Number(birthYear);
-    if (
-      birthYear.trim() &&
-      (!Number.isInteger(by) || by < 1900 || by > currentYear)
-    ) {
-      setError("Năm sinh không hợp lệ");
+    const birthError = validateDateParts(birthDay, birthMonth, birthYear, {
+      fieldLabel: "sinh",
+    });
+    if (birthError) {
+      setError(birthError);
       return false;
     }
     if (isDeceased) {
       const dy = Number(deathYear);
-      if (
-        !deathYear.trim() ||
-        !Number.isInteger(dy) ||
-        dy < 1900 ||
-        dy > currentYear
-      ) {
-        setError("Năm mất không hợp lệ");
+      const deathError = validateDateParts("", "", deathYear, {
+        yearRequired: true,
+        fieldLabel: "mất",
+      });
+      if (deathError) {
+        setError(deathError);
         return false;
       }
-      if (birthYear.trim() && dy < by) {
+      if (birthYear.trim() && dy < Number(birthYear)) {
         setError("Năm mất phải sau năm sinh");
         return false;
       }
@@ -86,8 +99,14 @@ export default function EditPersonModal({ visible, person, onClose }: Props) {
     editPerson(person.id, {
       fullName: fullName.trim(),
       gender,
+      birthDay: birthDay.trim() ? Number(birthDay) : undefined,
+      birthMonth: birthMonth.trim() ? Number(birthMonth) : undefined,
       birthYear: birthYear.trim() ? Number(birthYear) : undefined,
       deathYear: isDeceased && deathYear.trim() ? Number(deathYear) : undefined,
+      phone: phone.trim() || undefined,
+      occupation: occupation.trim() || undefined,
+      currentAddress: currentAddress.trim() || undefined,
+      note: note.trim() || undefined,
     });
     showToast("Đã cập nhật thông tin");
     onClose();
@@ -110,121 +129,211 @@ export default function EditPersonModal({ visible, person, onClose }: Props) {
             style={[styles.card, { backgroundColor: colors.surface }]}
             onPress={(e) => e.stopPropagation()}
           >
-            <Text style={[styles.heading, { color: colors.text }]}>
-              Sửa thông tin
-            </Text>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <Text style={[styles.heading, { color: colors.text }]}>
+                Sửa thông tin
+              </Text>
 
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.background,
-                  color: colors.text,
-                  borderColor: colors.border,
-                },
-              ]}
-              placeholder="Họ và tên"
-              value={fullName}
-              onChangeText={(v) => {
-                setFullName(v);
-                setError("");
-              }}
-            />
-
-            <Text style={[styles.label, { color: colors.text }]}>
-              Giới tính
-            </Text>
-            <View style={styles.toggleRow}>
-              <ToggleButton
-                active={gender === "male"}
-                label="Nam ♂"
-                onPress={() => setGender("male")}
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    borderColor: colors.border,
+                    color: colors.text,
+                    backgroundColor: colors.surface,
+                  },
+                ]}
+                placeholder="Họ và tên"
+                placeholderTextColor={colors.textSecondary}
+                value={fullName}
+                onChangeText={(v) => {
+                  setFullName(v);
+                  setError("");
+                }}
               />
-              <ToggleButton
-                active={gender === "female"}
-                label="Nữ ♀"
-                onPress={() => setGender("female")}
-              />
-            </View>
 
-            <Text style={[styles.label, { color: colors.text }]}>
-              Năm sinh (không bắt buộc)
-            </Text>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.background,
-                  color: colors.text,
-                  borderColor: colors.border,
-                },
-              ]}
-              placeholder="vd: 1975"
-              keyboardType="number-pad"
-              value={birthYear}
-              onChangeText={(v) => {
-                setBirthYear(v);
-                setError("");
-              }}
-            />
-
-            <Text style={[styles.label, { color: colors.text }]}>
-              Tình trạng
-            </Text>
-            <View style={styles.toggleRow}>
-              <ToggleButton
-                active={!isDeceased}
-                label="Còn sống"
-                onPress={() => setIsDeceased(false)}
-              />
-              <ToggleButton
-                active={isDeceased}
-                label="Đã mất"
-                onPress={() => setIsDeceased(true)}
-                color="#888"
-              />
-            </View>
-
-            {isDeceased && (
-              <>
-                <Text style={[styles.label, { color: colors.text }]}>
-                  Năm mất
-                </Text>
-                <TextInput
-                  style={[
-                    styles.input,
-                    {
-                      backgroundColor: colors.background,
-                      color: colors.text,
-                      borderColor: colors.border,
-                    },
-                  ]}
-                  placeholder="vd: 2020"
-                  keyboardType="number-pad"
-                  value={deathYear}
-                  onChangeText={(v) => {
-                    setDeathYear(v);
-                    setError("");
-                  }}
+              <Text style={[styles.label, { color: colors.textSecondary }]}>
+                Giới tính
+              </Text>
+              <View style={styles.toggleRow}>
+                <ToggleButton
+                  active={gender === "male"}
+                  label="Nam ♂"
+                  onPress={() => setGender("male")}
                 />
-              </>
-            )}
+                <ToggleButton
+                  active={gender === "female"}
+                  label="Nữ ♀"
+                  onPress={() => setGender("female")}
+                />
+              </View>
 
-            {error !== "" && <Text style={styles.errorText}>{error}</Text>}
+              <DateInputFields
+                label="Ngày sinh"
+                day={birthDay}
+                month={birthMonth}
+                year={birthYear}
+                onChangeDay={(v) => {
+                  setBirthDay(v);
+                  setError("");
+                }}
+                onChangeMonth={(v) => {
+                  setBirthMonth(v);
+                  setError("");
+                }}
+                onChangeYear={(v) => {
+                  setBirthYear(v);
+                  setError("");
+                }}
+                hasError={!!error}
+                hint="Có thêm Ngày + Tháng thì mới quy đổi chính xác được ra âm lịch"
+              />
 
-            <View style={styles.actionRow}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
-                <Text style={[styles.cancelText, { color: colors.text }]}>
-                  Huỷ
+              <Text style={[styles.label, { color: colors.textSecondary }]}>
+                Tình trạng
+              </Text>
+              <View style={styles.toggleRow}>
+                <ToggleButton
+                  active={!isDeceased}
+                  label="Còn sống"
+                  onPress={() => setIsDeceased(false)}
+                />
+                <ToggleButton
+                  active={isDeceased}
+                  label="Đã mất"
+                  onPress={() => setIsDeceased(true)}
+                  color="#888"
+                />
+              </View>
+
+              {isDeceased && (
+                <>
+                  <Text style={[styles.label, { color: colors.textSecondary }]}>
+                    Năm mất
+                  </Text>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      {
+                        borderColor: colors.border,
+                        color: colors.text,
+                        backgroundColor: colors.surface,
+                      },
+                    ]}
+                    placeholder="vd: 2020"
+                    placeholderTextColor={colors.textSecondary}
+                    keyboardType="number-pad"
+                    value={deathYear}
+                    onChangeText={(v) => {
+                      setDeathYear(v);
+                      setError("");
+                    }}
+                  />
+                </>
+              )}
+
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                Thông tin liên hệ
+              </Text>
+
+              <Text style={[styles.label, { color: colors.textSecondary }]}>
+                Số điện thoại
+              </Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    borderColor: colors.border,
+                    color: colors.text,
+                    backgroundColor: colors.surface,
+                  },
+                ]}
+                placeholder="09xx xxx xxx"
+                placeholderTextColor={colors.textSecondary}
+                keyboardType="phone-pad"
+                value={phone}
+                onChangeText={setPhone}
+              />
+
+              <Text style={[styles.label, { color: colors.textSecondary }]}>
+                Nghề nghiệp
+              </Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    borderColor: colors.border,
+                    color: colors.text,
+                    backgroundColor: colors.surface,
+                  },
+                ]}
+                placeholder="vd: Kỹ sư xây dựng"
+                placeholderTextColor={colors.textSecondary}
+                value={occupation}
+                onChangeText={setOccupation}
+              />
+
+              <Text style={[styles.label, { color: colors.textSecondary }]}>
+                Nơi ở hiện tại
+              </Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    borderColor: colors.border,
+                    color: colors.text,
+                    backgroundColor: colors.surface,
+                  },
+                ]}
+                placeholder="vd: Hà Đông, Hà Nội"
+                placeholderTextColor={colors.textSecondary}
+                value={currentAddress}
+                onChangeText={setCurrentAddress}
+              />
+
+              <Text style={[styles.label, { color: colors.textSecondary }]}>
+                Ghi chú
+              </Text>
+              <TextInput
+                style={[
+                  styles.textArea,
+                  {
+                    borderColor: colors.border,
+                    color: colors.text,
+                    backgroundColor: colors.surface,
+                  },
+                ]}
+                placeholder="Vài dòng ghi chú, tiểu sử ngắn..."
+                placeholderTextColor={colors.textSecondary}
+                value={note}
+                onChangeText={setNote}
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+              />
+
+              {error !== "" && (
+                <Text style={[styles.errorText, { color: colors.danger }]}>
+                  {error}
                 </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.saveBtn, { backgroundColor: colors.primary }]}
-                onPress={handleSave}
-              >
-                <Text style={[styles.saveText]}>Lưu</Text>
-              </TouchableOpacity>
-            </View>
+              )}
+
+              <View style={styles.actionRow}>
+                <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
+                  <Text
+                    style={[styles.cancelText, { color: colors.textSecondary }]}
+                  >
+                    Huỷ
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.saveBtn, { backgroundColor: colors.primary }]}
+                  onPress={handleSave}
+                >
+                  <Text style={styles.saveText}>Lưu</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
           </Pressable>
         </Pressable>
       </KeyboardAvoidingView>
@@ -242,26 +351,41 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     padding: 20,
+    maxHeight: "90%",
   },
   heading: { fontSize: 18, fontWeight: "700", marginBottom: 16 },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    marginTop: 8,
+    marginBottom: 12,
+  },
   input: {
     borderWidth: 1,
     borderRadius: 8,
     padding: 10,
     marginBottom: 16,
     fontSize: 14,
-    color: "#222",
   },
-  label: { fontSize: 13, color: "#666", marginBottom: 8, fontWeight: "600" },
+  label: { fontSize: 13, marginBottom: 8, fontWeight: "600" },
   toggleRow: { flexDirection: "row", gap: 8, marginBottom: 16 },
-  errorText: { fontSize: 12, color: "#D9364A", marginBottom: 12 },
-  actionRow: { flexDirection: "row", justifyContent: "flex-end", gap: 12 },
+  textArea: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 14,
+    minHeight: 70,
+    marginBottom: 8,
+  },
+  errorText: { fontSize: 12, marginBottom: 12 },
+  actionRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 12,
+    marginTop: 8,
+  },
   cancelBtn: { paddingHorizontal: 16, paddingVertical: 10 },
   cancelText: { fontWeight: "600" },
-  saveBtn: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  saveText: { fontWeight: "700", color: "#fff" },
+  saveBtn: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 },
+  saveText: { color: "#fff", fontWeight: "700" },
 });

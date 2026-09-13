@@ -1,9 +1,16 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useMemo, useEffect } from "react";
 import {
   View,
   StyleSheet,
   PanResponder,
   GestureResponderEvent,
+  Text,
+  TouchableOpacity,
+  Modal,
+  Pressable,
+  TextInput,
+  FlatList,
+  LayoutChangeEvent,
 } from "react-native";
 import Svg, {
   Rect,
@@ -24,11 +31,16 @@ import { useTheme } from "../context/ThemeContext";
 
 type Props = {
   root: DisplayNode;
+  persons: Person[];
   onPersonPress?: (personId: string) => void;
-  onAddChildPress?: (familyId: string) => void;
   truongIds?: Set<string>;
   mePersonId?: string | null;
+  expandableFamilyIds: Set<string>;
+  collapsedFamilyIds: Set<string>;
+  onToggleCollapse: (familyId: string) => void;
 };
+
+type PersonPosition = { x: number; y: number };
 
 function touchDistance(touches: { pageX: number; pageY: number }[]): number {
   const [a, b] = touches;
@@ -37,7 +49,6 @@ function touchDistance(touches: { pageX: number; pageY: number }[]): number {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-// Vẽ đường nối kiểu chữ Z (xuống - ngang - xuống), dùng chung cho link thường và link thủ công của multiMarriage
 function BranchLine({
   sx,
   sy,
@@ -80,62 +91,69 @@ function BranchLine({
   );
 }
 
-function AddChildButton({
+function CollapseToggle({
   cx,
   cy,
-  familyId,
-  onAddChildPress,
+  collapsed,
+  onPress,
 }: {
   cx: number;
   cy: number;
-  familyId: string;
-  onAddChildPress?: (familyId: string) => void;
+  collapsed: boolean;
+  onPress: () => void;
 }) {
   return (
     <>
       <Circle
         cx={cx}
         cy={cy}
-        r={12}
-        fill="#4A90D9"
-        onPress={() => onAddChildPress?.(familyId)}
+        r={11}
+        fill="#fff"
+        stroke="#B0B0B0"
+        strokeWidth={1.5}
+        onPress={onPress}
       />
       <SvgText
         x={cx}
         y={cy + 4}
-        fontSize={15}
+        fontSize={14}
         fontWeight="700"
-        fill="#fff"
+        fill="#888"
         textAnchor="middle"
-        onPress={() => onAddChildPress?.(familyId)}
+        onPress={onPress}
       >
-        +
+        {collapsed ? "+" : "−"}
       </SvgText>
     </>
   );
 }
 
-// Khoảng cách từ đáy ô xuống điểm bắt đầu rẽ nhánh -- tạo 1 vùng "cuống" riêng để đặt nút,
-// tách hẳn khỏi đường ngang rẽ nhánh (tránh nút bị đường kẻ đè/cắt ngang qua như lỗi trước đó)
 const STUB_LENGTH = 34;
-const BUTTON_OFFSET_IN_STUB = 15;
+const TOGGLE_OFFSET_IN_STUB = 15;
 
-// Vẽ: 1 đoạn thẳng xuống (cuống) có gắn nút "+", sau đó mới rẽ nhánh (chữ Z) xuống từng con.
-// Dùng chung cho cả node 1 vợ/chồng và từng nhánh của node nhiều vợ/chồng.
-function ChildrenConnector({
+function BranchConnector({
   originX,
   originY,
   childTargets,
   familyId,
-  onAddChildPress,
+  expandableFamilyIds,
+  collapsedFamilyIds,
+  onToggleCollapse,
 }: {
   originX: number;
   originY: number;
   childTargets: { id: string; x: number; y: number }[];
   familyId: string;
-  onAddChildPress?: (familyId: string) => void;
+  expandableFamilyIds: Set<string>;
+  collapsedFamilyIds: Set<string>;
+  onToggleCollapse: (familyId: string) => void;
 }) {
+  const isExpandable = expandableFamilyIds.has(familyId);
+  const isCollapsed = collapsedFamilyIds.has(familyId);
   const stubEndY = originY + STUB_LENGTH;
+
+  if (!isExpandable) return null;
+
   return (
     <>
       <Line
@@ -146,11 +164,11 @@ function ChildrenConnector({
         stroke="#B0B0B0"
         strokeWidth={2}
       />
-      <AddChildButton
+      <CollapseToggle
         cx={originX}
-        cy={originY + BUTTON_OFFSET_IN_STUB}
-        familyId={familyId}
-        onAddChildPress={onAddChildPress}
+        cy={originY + TOGGLE_OFFSET_IN_STUB}
+        collapsed={isCollapsed}
+        onPress={() => onToggleCollapse(familyId)}
       />
       {childTargets.map((t) => (
         <BranchLine key={t.id} sx={originX} sy={stubEndY} tx={t.x} ty={t.y} />
@@ -159,25 +177,78 @@ function ChildrenConnector({
   );
 }
 
+function computePersonPositions(
+  nodes: ReturnType<typeof computeFamilyTreeLayout>["nodes"],
+  offsetX: number,
+  offsetY: number,
+): Map<string, PersonPosition> {
+  const map = new Map<string, PersonPosition>();
+
+  for (const node of nodes) {
+    const cx = node.x + offsetX;
+    const cy = node.y + offsetY;
+    const d = node.data;
+    if (d.isPlaceholder) continue;
+
+    if (d.multiMarriage) {
+      map.set(d.multiMarriage.anchor.id, { x: cx, y: cy });
+
+      const nodeChildren = node.children ?? [];
+      let childCursor = 0;
+      const spouseBoxY = cy + NODE_HEIGHT + 15;
+
+      for (const marriage of d.multiMarriage.marriages) {
+        const count =
+          marriage.children.length > 0 ? marriage.children.length : 1;
+        const group = nodeChildren.slice(childCursor, childCursor + count);
+        childCursor += count;
+        if (marriage.spouse) {
+          const groupXs = group.map((c) => c.x + offsetX);
+          const centerX =
+            groupXs.length > 0
+              ? (Math.min(...groupXs) + Math.max(...groupXs)) / 2
+              : cx;
+          map.set(marriage.spouse.id, { x: centerX, y: spouseBoxY });
+        }
+      }
+    } else if (d.husband || d.wife) {
+      if (d.husband) map.set(d.husband.id, { x: cx - NODE_WIDTH / 4, y: cy });
+      if (d.wife) map.set(d.wife.id, { x: cx + NODE_WIDTH / 4, y: cy });
+    } else if (d.singlePerson) {
+      map.set(d.singlePerson.id, { x: cx, y: cy });
+    }
+  }
+
+  return map;
+}
+
 export default function FamilyTreeView({
   root,
+  persons,
   onPersonPress,
-  onAddChildPress,
   truongIds,
   mePersonId,
+  expandableFamilyIds,
+  collapsedFamilyIds,
+  onToggleCollapse,
 }: Props) {
   const { colors } = useTheme();
-  // Nhờ getNodeChildren() đã chèn placeholder cho nhánh rỗng, d3 giờ tự biết đủ toàn bộ
-  // nhánh (kể cả chưa có con) và tự tính width/vị trí chính xác -- không cần patch tay nữa.
   const { nodes, width, height } = computeFamilyTreeLayout(root);
   const xs = nodes.map((n) => n.x);
   const offsetX = -Math.min(...xs) + NODE_WIDTH / 2 + 40;
   const offsetY = 60;
 
+  const personPositions = useMemo(
+    () => computePersonPositions(nodes, offsetX, offsetY),
+    [nodes, offsetX, offsetY],
+  );
+
   const [scale, setScale] = useState(1);
   const [translate, setTranslate] = useState({ x: 0, y: 0 });
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Dùng ref để đọc/ghi giá trị mới nhất trong lúc kéo, tránh setState bị trễ (stale closure)
   const liveRef = useRef({ scale: 1, translateX: 0, translateY: 0 });
   const gestureRef = useRef<{
     mode: "none" | "pan" | "pinch";
@@ -190,12 +261,64 @@ export default function FamilyTreeView({
     lastX: 0,
     lastY: 0,
   });
+  const animationFrameRef = useRef<number | null>(null);
+
+  const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+
+  // Tự nội suy bằng requestAnimationFrame, gọi lại đúng setTranslate/setScale sẵn có nhiều lần
+  // liên tiếp -- không đụng gì tới PanResponder/logic pan-pinch đang chạy ổn định.
+  const animateTo = (
+    targetX: number,
+    targetY: number,
+    targetScale: number,
+    duration = 300,
+  ) => {
+    if (animationFrameRef.current !== null) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+
+    const startX = liveRef.current.translateX;
+    const startY = liveRef.current.translateY;
+    const startScale = liveRef.current.scale;
+    const startTime = Date.now();
+
+    const step = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = easeOutCubic(progress);
+
+      const currentX = startX + (targetX - startX) * eased;
+      const currentY = startY + (targetY - startY) * eased;
+      const currentScale = startScale + (targetScale - startScale) * eased;
+
+      liveRef.current.translateX = currentX;
+      liveRef.current.translateY = currentY;
+      liveRef.current.scale = currentScale;
+      setTranslate({ x: currentX, y: currentY });
+      setScale(currentScale);
+
+      if (progress < 1) {
+        animationFrameRef.current = requestAnimationFrame(step);
+      } else {
+        animationFrameRef.current = null;
+      }
+    };
+
+    animationFrameRef.current = requestAnimationFrame(step);
+  };
 
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
       onPanResponderGrant: (evt: GestureResponderEvent) => {
+        // Nếu người dùng chạm vào màn hình giữa lúc đang trượt tới -> huỷ animation ngay,
+        // nhường quyền điều khiển lại cho tay chạm, tránh 2 bên giành nhau ghi đè giá trị.
+        if (animationFrameRef.current !== null) {
+          cancelAnimationFrame(animationFrameRef.current);
+          animationFrameRef.current = null;
+        }
+
         const touches = evt.nativeEvent.touches;
         if (touches.length === 2) {
           gestureRef.current.mode = "pinch";
@@ -252,11 +375,67 @@ export default function FamilyTreeView({
     }),
   ).current;
 
+  const handleLayout = (e: LayoutChangeEvent) => {
+    const { width: w, height: h } = e.nativeEvent.layout;
+    setContainerSize({ width: w, height: h });
+  };
+
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
+
+  const handleJumpToPerson = (personId: string) => {
+    const pos = personPositions.get(personId);
+    if (!pos || containerSize.width === 0) return;
+
+    const s = liveRef.current.scale;
+    const tx = containerSize.width / 2 - s * pos.x;
+    const ty = containerSize.height / 2 - s * pos.y;
+
+    animateTo(tx, ty, s, 300);
+
+    setSearchOpen(false);
+    setSearchQuery("");
+    onPersonPress?.(personId);
+  };
+
+  const searchResults = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return [];
+    return persons
+      .filter((p) => p.fullName.toLowerCase().includes(q))
+      .slice(0, 30);
+  }, [searchQuery, persons]);
+
   return (
     <View
       style={[styles.container, { backgroundColor: colors.background }]}
       {...panResponder.panHandlers}
+      onLayout={handleLayout}
     >
+      <Svg
+        width="100%"
+        height="100%"
+        style={StyleSheet.absoluteFillObject}
+        pointerEvents="none"
+      >
+        <Defs>
+          <Pattern
+            id="dotGrid"
+            width={28}
+            height={28}
+            patternUnits="userSpaceOnUse"
+          >
+            <Circle cx={2} cy={2} r={1.4} fill={colors.border} />
+          </Pattern>
+        </Defs>
+        <Rect x={0} y={0} width="100%" height="100%" fill="url(#dotGrid)" />
+      </Svg>
+
       <View
         style={{
           transform: [
@@ -267,43 +446,19 @@ export default function FamilyTreeView({
         }}
       >
         <Svg width={width} height={height}>
-          <Defs>
-            {/* Lưới chấm nhẹ làm nền canvas -- đỡ trống trải, đặc biệt ở dark mode (nền đen phẳng nhìn hơi trơ) */}
-            <Pattern
-              id="dotGrid"
-              width={28}
-              height={28}
-              patternUnits="userSpaceOnUse"
-            >
-              <Circle cx={2} cy={2} r={1.8} fill={colors.border} />
-            </Pattern>
-          </Defs>
-          <Rect
-            x={0}
-            y={0}
-            width={width}
-            height={height}
-            fill="url(#dotGrid)"
-          />
-
           {nodes.map((node) => {
             const cx = node.x + offsetX;
             const cy = node.y + offsetY;
             const d = node.data;
 
-            // Node ảo (đại diện cho nhánh hôn nhân chưa có con, chỉ để d3 tính vị trí) -> không vẽ gì
             if (d.isPlaceholder) return null;
 
-            // Trường hợp 1 người có từ 2 vợ/chồng trở lên -> vẽ node trục + rẽ nhánh
             if (d.multiMarriage) {
               const anchor = d.multiMarriage.anchor;
               const nodeChildren = node.children ?? [];
               let childCursor = 0;
 
               const branches = d.multiMarriage.marriages.map((marriage) => {
-                // Nhánh có con thật: lấy đúng số con. Nhánh rỗng: lấy đúng 1 placeholder
-                // (do getNodeChildren() chèn vào) -- d3 đã tự tính vị trí hợp lý cho nó,
-                // không còn cần công thức tự chế nào ở đây nữa.
                 const count =
                   marriage.children.length > 0 ? marriage.children.length : 1;
                 const group = nodeChildren.slice(
@@ -315,8 +470,6 @@ export default function FamilyTreeView({
                 const groupXs = group.map((c) => c.x + offsetX);
                 const centerX =
                   (Math.min(...groupXs) + Math.max(...groupXs)) / 2;
-
-                // Placeholder không phải con thật -> loại khỏi danh sách để không vẽ nhầm
                 const realChildren = group.filter((c) => !c.data.isPlaceholder);
 
                 return { marriage, centerX, group: realChildren };
@@ -326,7 +479,6 @@ export default function FamilyTreeView({
 
               return (
                 <React.Fragment key={d.id}>
-                  {/* Node trục: 1 ô duy nhất cho người có nhiều vợ/chồng */}
                   <PersonBox
                     x={cx - NODE_WIDTH / 4}
                     y={cy}
@@ -340,7 +492,6 @@ export default function FamilyTreeView({
 
                   {branches.map(({ marriage, centerX, group }) => (
                     <React.Fragment key={marriage.familyId}>
-                      {/* Đường từ node trục rẽ xuống từng vợ/chồng */}
                       <BranchLine
                         sx={cx}
                         sy={cy + NODE_HEIGHT}
@@ -361,7 +512,7 @@ export default function FamilyTreeView({
                         />
                       )}
 
-                      <ChildrenConnector
+                      <BranchConnector
                         originX={centerX}
                         originY={spouseBoxY + NODE_HEIGHT}
                         childTargets={group.map((c) => ({
@@ -370,7 +521,9 @@ export default function FamilyTreeView({
                           y: c.y + offsetY,
                         }))}
                         familyId={marriage.familyId}
-                        onAddChildPress={onAddChildPress}
+                        expandableFamilyIds={expandableFamilyIds}
+                        collapsedFamilyIds={collapsedFamilyIds}
+                        onToggleCollapse={onToggleCollapse}
                       />
                     </React.Fragment>
                   ))}
@@ -379,8 +532,8 @@ export default function FamilyTreeView({
             }
 
             if (d.husband || d.wife) {
-              const boxW = NODE_WIDTH / 2 - 8; // trừ thêm khoảng hở giữa 2 ô
-              const marriageLineY = cy + NODE_HEIGHT / 2;
+              const boxW = NODE_WIDTH / 2 - 8;
+              const ringIconY = cy + NODE_HEIGHT * 0.35;
               const childTargets = (node.children ?? []).map((c) => ({
                 id: c.data.id,
                 x: c.x + offsetX,
@@ -388,22 +541,23 @@ export default function FamilyTreeView({
               }));
               return (
                 <React.Fragment key={d.id}>
-                  {/* Dây nối nhỏ thể hiện quan hệ vợ chồng, giữa 2 ô */}
-                  <Line
-                    x1={cx - 6}
-                    y1={marriageLineY}
-                    x2={cx + 6}
-                    y2={marriageLineY}
-                    stroke="#999"
-                    strokeWidth={2}
-                  />
+                  <SvgText
+                    x={cx}
+                    y={ringIconY}
+                    fontSize={13}
+                    textAnchor="middle"
+                  >
+                    💍
+                  </SvgText>
 
-                  <ChildrenConnector
+                  <BranchConnector
                     originX={cx}
                     originY={cy + NODE_HEIGHT}
                     childTargets={childTargets}
                     familyId={d.id}
-                    onAddChildPress={onAddChildPress}
+                    expandableFamilyIds={expandableFamilyIds}
+                    collapsedFamilyIds={collapsedFamilyIds}
+                    onToggleCollapse={onToggleCollapse}
                   />
 
                   {d.husband && (
@@ -453,6 +607,112 @@ export default function FamilyTreeView({
           })}
         </Svg>
       </View>
+
+      <TouchableOpacity
+        style={[
+          styles.searchBtn,
+          { backgroundColor: colors.surface, borderColor: colors.border },
+        ]}
+        onPress={() => setSearchOpen(true)}
+      >
+        <Text style={styles.searchBtnIcon}>🔍</Text>
+      </TouchableOpacity>
+
+      <View
+        style={[
+          styles.zoomBadge,
+          { backgroundColor: colors.surface, borderColor: colors.border },
+        ]}
+      >
+        <Text style={[styles.zoomBadgeText, { color: colors.textSecondary }]}>
+          {Math.round(scale * 100)}%
+        </Text>
+      </View>
+
+      <Modal
+        visible={searchOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSearchOpen(false)}
+      >
+        <Pressable
+          style={styles.searchOverlay}
+          onPress={() => setSearchOpen(false)}
+        >
+          <Pressable
+            style={[styles.searchCard, { backgroundColor: colors.surface }]}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <TextInput
+              style={[
+                styles.searchInput,
+                {
+                  borderColor: colors.border,
+                  color: colors.text,
+                  backgroundColor: colors.background,
+                },
+              ]}
+              placeholder="Tìm theo tên..."
+              placeholderTextColor={colors.textSecondary}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoFocus
+            />
+
+            <FlatList
+              data={searchResults}
+              keyExtractor={(item) => item.id}
+              style={{ maxHeight: 320 }}
+              ListEmptyComponent={
+                searchQuery.trim() !== "" ? (
+                  <Text
+                    style={[styles.emptyText, { color: colors.textSecondary }]}
+                  >
+                    Không tìm thấy ai tên "{searchQuery}"
+                  </Text>
+                ) : null
+              }
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.resultRow}
+                  onPress={() => handleJumpToPerson(item.id)}
+                >
+                  <View
+                    style={[
+                      styles.resultAvatar,
+                      {
+                        backgroundColor:
+                          item.gender === "male" ? "#4A90D9" : "#D96BA0",
+                      },
+                    ]}
+                  >
+                    <Text style={styles.resultAvatarText}>
+                      {item.fullName.charAt(0)}
+                    </Text>
+                  </View>
+                  <Text style={[styles.resultName, { color: colors.text }]}>
+                    {item.fullName}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            />
+
+            <TouchableOpacity
+              style={styles.searchCloseBtn}
+              onPress={() => setSearchOpen(false)}
+            >
+              <Text
+                style={[
+                  styles.searchCloseText,
+                  { color: colors.textSecondary },
+                ]}
+              >
+                Đóng
+              </Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -476,108 +736,81 @@ function PersonBox({
   isMe?: boolean;
   onPress?: () => void;
 }) {
+  const { colors } = useTheme();
   const isDeceased = !!person.deathYear;
-  const currentYear = new Date().getFullYear();
 
-  const fill = isDeceased
-    ? "#ECECEC"
-    : person.gender === "male"
-      ? "#DCEBFB"
-      : "#FBE3EC";
-  const baseStroke = person.gender === "male" ? "#4A90D9" : "#D96BA0";
-  const stroke = isMe ? "#2E8B57" : isTruong ? "#D9A441" : baseStroke;
-  const strokeWidth = isMe || isTruong ? 3 : 1.5;
-
-  // Dòng thông tin phụ: tuổi hiện tại (còn sống) hoặc hưởng thọ (đã mất)
-  let infoLine = "";
-  if (isDeceased) {
-    infoLine =
-      person.birthYear && person.deathYear
-        ? `✝ Hưởng thọ ${person.deathYear - person.birthYear} tuổi`
-        : "✝ Đã mất";
-  } else if (person.birthYear) {
-    infoLine = `${currentYear - person.birthYear} tuổi`;
-  }
+  const cx = x + w / 2;
+  const avatarR = 24;
+  const avatarCy = y + avatarR + 2;
+  const baseColor = person.gender === "male" ? "#4A90D9" : "#D96BA0";
+  const ringColor = isMe ? colors.success : isTruong ? colors.accent : null;
 
   return (
     <>
-      <Rect
-        x={x}
-        y={y}
-        width={w}
-        height={h}
-        rx={10}
-        fill={fill}
-        stroke={stroke}
-        strokeWidth={strokeWidth}
-        strokeDasharray={isDeceased ? "5,3" : undefined}
-        opacity={isDeceased ? 0.8 : 1}
-        onPress={onPress}
-      />
-
-      {/* Vương miện đánh dấu trưởng, đặt ở góc trên bên trái ô */}
-      {isTruong && (
-        <SvgText
-          x={x + 14}
-          y={y + 16}
-          fontSize={16}
-          textAnchor="middle"
+      {ringColor && (
+        <Circle
+          cx={cx}
+          cy={avatarCy}
+          r={avatarR + 4}
+          fill="none"
+          stroke={ringColor}
+          strokeWidth={3}
           onPress={onPress}
-        >
-          👑
-        </SvgText>
+        />
       )}
 
+      <Circle
+        cx={cx}
+        cy={avatarCy}
+        r={avatarR}
+        fill={baseColor}
+        opacity={isDeceased ? 0.45 : 1}
+        onPress={onPress}
+      />
       <SvgText
-        x={x + w / 2}
-        y={y + h / 2 - 10}
-        fontSize={12}
+        x={cx}
+        y={avatarCy + 6}
+        fontSize={18}
         fontWeight="700"
-        fill={isDeceased ? "#666" : "#222"}
+        fill="#fff"
+        textAnchor="middle"
+        onPress={onPress}
+      >
+        {person.fullName.charAt(0)}
+      </SvgText>
+
+      <Circle
+        cx={cx + avatarR - 4}
+        cy={avatarCy + avatarR - 4}
+        r={9}
+        fill={colors.surface}
+        stroke={baseColor}
+        strokeWidth={1.5}
+        onPress={onPress}
+      />
+      <SvgText
+        x={cx + avatarR - 4}
+        y={avatarCy + avatarR - 1}
+        fontSize={10}
+        fontWeight="700"
+        fill={baseColor}
+        textAnchor="middle"
+        onPress={onPress}
+      >
+        {person.gender === "male" ? "♂" : "♀"}
+      </SvgText>
+
+      <SvgText
+        x={cx}
+        y={avatarCy + avatarR + 18}
+        fontSize={12}
+        fontWeight="600"
+        fill={isDeceased ? colors.textSecondary : colors.text}
         textAnchor="middle"
         onPress={onPress}
       >
         {person.fullName}
       </SvgText>
-      {infoLine !== "" && (
-        <SvgText
-          x={x + w / 2}
-          y={y + h / 2 + 14}
-          fontSize={10}
-          fontWeight="500"
-          fill={isDeceased ? "#999" : "#666"}
-          textAnchor="middle"
-          onPress={onPress}
-        >
-          {infoLine}
-        </SvgText>
-      )}
-
-      {/* Nhãn "Tôi", đặt ở góc trên bên phải ô */}
-      {isMe && (
-        <>
-          <Rect
-            x={x + w - 34}
-            y={y + 4}
-            width={30}
-            height={16}
-            rx={8}
-            fill="#2E8B57"
-            onPress={onPress}
-          />
-          <SvgText
-            x={x + w - 19}
-            y={y + 15}
-            fontSize={9}
-            fontWeight="700"
-            fill="#fff"
-            textAnchor="middle"
-            onPress={onPress}
-          >
-            Tôi
-          </SvgText>
-        </>
-      )}
     </>
   );
 }
@@ -587,4 +820,69 @@ const styles = StyleSheet.create({
     flex: 1,
     overflow: "hidden",
   },
+  searchBtn: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 3,
+  },
+  searchBtnIcon: { fontSize: 18 },
+  zoomBadge: {
+    position: "absolute",
+    bottom: 12,
+    right: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  zoomBadgeText: { fontSize: 12, fontWeight: "700" },
+
+  searchOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "flex-start",
+    paddingTop: 80,
+  },
+  searchCard: {
+    marginHorizontal: 20,
+    borderRadius: 16,
+    padding: 16,
+    maxHeight: "70%",
+  },
+  searchInput: {
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 15,
+    marginBottom: 12,
+  },
+  emptyText: { textAlign: "center", fontSize: 13, paddingVertical: 20 },
+  resultRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 9,
+  },
+  resultAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  resultAvatarText: { color: "#fff", fontWeight: "700", fontSize: 14 },
+  resultName: { fontSize: 14, fontWeight: "600" },
+  searchCloseBtn: { marginTop: 8, alignItems: "center", paddingVertical: 8 },
+  searchCloseText: { fontWeight: "600", fontSize: 13 },
 });

@@ -6,18 +6,21 @@ type Props = {
   label: string;
   onPress: () => void;
   color?: string; // màu nền khi active, mặc định lấy theo theme.primary
+  disabled?: boolean;
 };
 
-export default function ToggleButton({ active, label, onPress, color }: Props) {
+export default function ToggleButton({ active, label, onPress, color, disabled }: Props) {
   const { colors } = useTheme();
   const activeColor = color ?? colors.primary;
 
   return (
     <TouchableOpacity
+      disabled={disabled}
       style={[
         styles.toggleBtn,
         { backgroundColor: colors.background },
         active && { backgroundColor: activeColor },
+        disabled && { opacity: 0.5 },
       ]}
       onPress={onPress}
     >

@@ -36,7 +36,7 @@ export default function FamilyStatisticsView({ stats }: Props) {
       value: stats.maleCount,
       label: "Nam",
       percent: pct(stats.maleCount),
-      barColor: "#4A90D9",
+      barColor: colors.male,
     },
     {
       icon: "♀",
@@ -44,7 +44,7 @@ export default function FamilyStatisticsView({ stats }: Props) {
       value: stats.femaleCount,
       label: "Nữ",
       percent: pct(stats.femaleCount),
-      barColor: "#D96BA0",
+      barColor: colors.female,
     },
     {
       icon: "👰",
@@ -52,7 +52,7 @@ export default function FamilyStatisticsView({ stats }: Props) {
       value: stats.daughterInLawCount,
       label: "Con dâu",
       percent: pct(stats.daughterInLawCount),
-      barColor: "#D96BA0",
+      barColor: colors.female,
     },
     {
       icon: "🤵",
@@ -195,25 +195,32 @@ export default function FamilyStatisticsView({ stats }: Props) {
           <View
             style={[
               styles.genderBarSegment,
-              { flex: stats.maleCount || 0.001, backgroundColor: "#4A90D9" },
+              { flex: stats.maleCount || 0.001, backgroundColor: colors.male },
             ]}
           />
           <View
             style={[
               styles.genderBarSegment,
-              { flex: stats.femaleCount || 0.001, backgroundColor: "#D96BA0" },
+              {
+                flex: stats.femaleCount || 0.001,
+                backgroundColor: colors.female,
+              },
             ]}
           />
         </View>
         <View style={styles.genderLegendRow}>
           <View style={styles.genderLegendItem}>
-            <View style={[styles.legendDot, { backgroundColor: "#4A90D9" }]} />
+            <View
+              style={[styles.legendDot, { backgroundColor: colors.male }]}
+            />
             <Text style={[styles.legendText, { color: colors.text }]}>
               Nam — {stats.maleCount} người ({pct(stats.maleCount)}%)
             </Text>
           </View>
           <View style={styles.genderLegendItem}>
-            <View style={[styles.legendDot, { backgroundColor: "#D96BA0" }]} />
+            <View
+              style={[styles.legendDot, { backgroundColor: colors.female }]}
+            />
             <Text style={[styles.legendText, { color: colors.text }]}>
               Nữ — {stats.femaleCount} người ({pct(stats.femaleCount)}%)
             </Text>

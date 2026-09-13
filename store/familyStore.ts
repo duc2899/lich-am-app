@@ -8,14 +8,22 @@ function generateId(prefix: string): string {
 type NewPersonInput = {
   fullName: string;
   gender: Gender;
+  birthDay?: number;
+  birthMonth?: number;
   birthYear?: number;
 };
 
 type EditPersonInput = {
   fullName: string;
   gender: Gender;
+  birthDay?: number;
+  birthMonth?: number;
   birthYear?: number;
   deathYear?: number;
+  phone?: string;
+  occupation?: string;
+  currentAddress?: string;
+  note?: string;
 };
 
 type FamilyState = {
@@ -43,15 +51,12 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
       id: generateId("p"),
       fullName: data.fullName,
       gender: data.gender,
+      birthDay: data.birthDay,
+      birthMonth: data.birthMonth,
       birthYear: data.birthYear,
       spouseInFamilyIds: [],
     };
-    set({
-      persons: [newPerson],
-      families: [],
-      rootPersonId: newPerson.id,
-      mePersonId: null,
-    });
+    set({ persons: [newPerson], families: [], rootPersonId: newPerson.id, mePersonId: null });
   },
 
   addChildToFamily: (familyId, data) => {
@@ -59,6 +64,8 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
       id: generateId("p"),
       fullName: data.fullName,
       gender: data.gender,
+      birthDay: data.birthDay,
+      birthMonth: data.birthMonth,
       birthYear: data.birthYear,
       childOfFamilyId: familyId,
       spouseInFamilyIds: [],
@@ -66,9 +73,7 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
     set((state) => ({
       persons: [...state.persons, newPerson],
       families: state.families.map((f) =>
-        f.id === familyId
-          ? { ...f, childrenIds: [...f.childrenIds, newPerson.id] }
-          : f,
+        f.id === familyId ? { ...f, childrenIds: [...f.childrenIds, newPerson.id] } : f
       ),
     }));
   },
@@ -82,6 +87,8 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
       id: generateId("p"),
       fullName: data.fullName,
       gender: data.gender,
+      birthDay: data.birthDay,
+      birthMonth: data.birthMonth,
       birthYear: data.birthYear,
       spouseInFamilyIds: [newFamilyId],
     };
@@ -95,9 +102,7 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
     set((state) => ({
       persons: [
         ...state.persons.map((p) =>
-          p.id === personId
-            ? { ...p, spouseInFamilyIds: [...p.spouseInFamilyIds, newFamilyId] }
-            : p,
+          p.id === personId ? { ...p, spouseInFamilyIds: [...p.spouseInFamilyIds, newFamilyId] } : p
         ),
         newSpouse,
       ],
@@ -110,13 +115,19 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
       persons: state.persons.map((p) =>
         p.id === personId
           ? {
-              ...p,
-              fullName: data.fullName,
-              gender: data.gender,
-              birthYear: data.birthYear,
-              deathYear: data.deathYear,
-            }
-          : p,
+            ...p,
+            fullName: data.fullName,
+            gender: data.gender,
+            birthDay: data.birthDay,
+            birthMonth: data.birthMonth,
+            birthYear: data.birthYear,
+            deathYear: data.deathYear,
+            phone: data.phone,
+            occupation: data.occupation,
+            currentAddress: data.currentAddress,
+            note: data.note,
+          }
+          : p
       ),
     }));
   },
@@ -152,10 +163,7 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
       const families = state.families
         .map((f) => ({
           ...f,
-          husbandId:
-            f.husbandId && idsToDelete.has(f.husbandId)
-              ? undefined
-              : f.husbandId,
+          husbandId: f.husbandId && idsToDelete.has(f.husbandId) ? undefined : f.husbandId,
           wifeId: f.wifeId && idsToDelete.has(f.wifeId) ? undefined : f.wifeId,
           childrenIds: f.childrenIds.filter((cid) => !idsToDelete.has(cid)),
         }))
@@ -169,26 +177,16 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
       const survivingFamilyIds = new Set(families.map((f) => f.id));
       const cleanedPersons = persons.map((p) => ({
         ...p,
-        spouseInFamilyIds: p.spouseInFamilyIds.filter((fid) =>
-          survivingFamilyIds.has(fid),
-        ),
+        spouseInFamilyIds: p.spouseInFamilyIds.filter((fid) => survivingFamilyIds.has(fid)),
         childOfFamilyId:
-          p.childOfFamilyId && survivingFamilyIds.has(p.childOfFamilyId)
-            ? p.childOfFamilyId
-            : undefined,
+          p.childOfFamilyId && survivingFamilyIds.has(p.childOfFamilyId) ? p.childOfFamilyId : undefined,
       }));
 
       return {
         persons: cleanedPersons,
         families,
-        mePersonId:
-          state.mePersonId && idsToDelete.has(state.mePersonId)
-            ? null
-            : state.mePersonId,
-        rootPersonId:
-          state.rootPersonId && idsToDelete.has(state.rootPersonId)
-            ? null
-            : state.rootPersonId,
+        mePersonId: state.mePersonId && idsToDelete.has(state.mePersonId) ? null : state.mePersonId,
+        rootPersonId: state.rootPersonId && idsToDelete.has(state.rootPersonId) ? null : state.rootPersonId,
       };
     });
   },

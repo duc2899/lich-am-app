@@ -8,6 +8,8 @@ export type ThemeColors = {
   accent: string; // màu nhấn phụ - vàng đồng (đặc trưng của app)
   danger: string; // đỏ - cảnh báo, xoá
   success: string; // xanh lá - thành công
+  male: string; // màu đại diện cho nam
+  female: string; // màu đại diện cho nữ
 };
 
 export const LightColors: ThemeColors = {
@@ -20,6 +22,8 @@ export const LightColors: ThemeColors = {
   accent: "#D9A441",
   danger: "#D9364A",
   success: "#2E8B57",
+  female: "#D96BA0",
+  male: "#4A90D9",
 };
 
 export const DarkColors: ThemeColors = {
@@ -32,4 +36,6 @@ export const DarkColors: ThemeColors = {
   accent: "#E5C368",
   danger: "#FF6B6B",
   success: "#4CD37D",
+  female: "#D96BA0",
+  male: "#5AA0E8",
 };
