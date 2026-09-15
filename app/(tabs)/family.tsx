@@ -24,13 +24,14 @@ import FamilyStatisticsView from "../../components/FamilyStatisticsView";
 import SubTabBar from "../../components/SubTabBar";
 import { computeFamilyStatistics } from "../../utils/familyStatistics";
 import MemoryGalleryView from "../../components/MemoryGalleryView";
+import KinshipLookupView from "../../components/KinshipLookupView";
 
 import { useTheme } from "../../context/ThemeContext";
 
 export default function FamilyScreen() {
   const { colors } = useTheme();
   const [activeSubTab, setActiveSubTab] = useState<
-    "stats" | "diagram" | "gallery"
+    "stats" | "diagram" | "gallery" | "kinship"
   >("diagram");
   const [collapsedFamilyIds, setCollapsedFamilyIds] = useState<Set<string>>(
     new Set(),
@@ -166,10 +167,11 @@ export default function FamilyScreen() {
           { key: "stats", label: "Thống kê", icon: "📊" },
           { key: "diagram", label: "Sơ đồ", icon: "🌳" },
           { key: "gallery", label: "Trưng bày", icon: "🖼️" },
+          { key: "kinship", label: "Mối quan hệ", icon: "👨‍👩‍👧‍👦" },
         ]}
         activeKey={activeSubTab}
         onChange={(key) =>
-          setActiveSubTab(key as "stats" | "diagram" | "gallery")
+          setActiveSubTab(key as "stats" | "diagram" | "gallery" | "kinship")
         }
       />
 
@@ -177,6 +179,8 @@ export default function FamilyScreen() {
         <FamilyStatisticsView stats={statistics} />
       ) : activeSubTab === "gallery" ? (
         <MemoryGalleryView />
+      ) : activeSubTab === "kinship" ? (
+        <KinshipLookupView persons={persons} families={families} />
       ) : (
         <>
           <FamilyTreeView
@@ -190,9 +194,7 @@ export default function FamilyScreen() {
             onToggleCollapse={handleToggleCollapse}
           />
           <FamilyLegend />
-          <Text style={styles.hint}>
-            Chụm 2 ngón tay để zoom · Bấm + trên dây nối để thêm con
-          </Text>
+          <Text style={styles.hint}>Chụm 2 ngón tay để zoom</Text>
         </>
       )}
 

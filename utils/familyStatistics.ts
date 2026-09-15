@@ -1,6 +1,7 @@
 import { Person, Family } from "../types/family";
 import { computeTruongLineage } from "./familyLineage";
 import { getChiOfYear } from "../constants/lunar";
+import { getWesternZodiacSign } from "./zodiacSign";
 
 export type FamilyStatistics = {
     totalMembers: number;
@@ -14,6 +15,7 @@ export type FamilyStatistics = {
     truongCount: number; // con trưởng (toàn bộ chuỗi trưởng qua các đời)
     generationCounts: { generation: number; count: number }[]; // đời 1, 2, 3... -> số người
     zodiacCounts: { chi: string; count: number }[]; // con giáp -> số người, sắp xếp giảm dần
+    westernZodiacCounts: { sign: string; count: number }[]; // cung hoàng đạo -> số người
 };
 
 /**
@@ -132,6 +134,18 @@ export function computeFamilyStatistics(
         .map(([chi, count]) => ({ chi, count }))
         .sort((a, b) => b.count - a.count);
 
+    // Cung hoàng đạo -- chỉ tính người có ĐỦ birthDay + birthMonth (không cần birthYear vì
+    // cung hoàng đạo cố định theo ngày/tháng dương lịch, không phụ thuộc năm)
+    const zodiacSignCountMap = new Map<string, number>();
+    for (const p of persons) {
+        if (!p.birthDay || !p.birthMonth) continue;
+        const sign = getWesternZodiacSign(p.birthDay, p.birthMonth);
+        zodiacSignCountMap.set(sign, (zodiacSignCountMap.get(sign) ?? 0) + 1);
+    }
+    const westernZodiacCounts = Array.from(zodiacSignCountMap.entries())
+        .map(([sign, count]) => ({ sign, count }))
+        .sort((a, b) => b.count - a.count);
+
     return {
         totalMembers,
         maleCount,
@@ -144,5 +158,6 @@ export function computeFamilyStatistics(
         truongCount,
         generationCounts,
         zodiacCounts,
+        westernZodiacCounts,
     };
 }

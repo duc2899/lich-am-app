@@ -19,6 +19,8 @@ import Svg, {
   Text as SvgText,
   Defs,
   Pattern,
+  Image as SvgImage,
+  ClipPath,
 } from "react-native-svg";
 import { DisplayNode } from "../utils/familyTreeBuilder";
 import {
@@ -682,13 +684,24 @@ export default function FamilyTreeView({
                       styles.resultAvatar,
                       {
                         backgroundColor:
-                          item.gender === "male" ? "#4A90D9" : "#D96BA0",
+                          item.gender === "male" ? colors.male : colors.female,
                       },
                     ]}
                   >
-                    <Text style={styles.resultAvatarText}>
-                      {item.fullName.charAt(0)}
-                    </Text>
+                    {item.photoUri ? (
+                      <SvgImage
+                        x={0}
+                        y={0}
+                        width={36}
+                        height={36}
+                        href={item.photoUri}
+                        preserveAspectRatio="xMidYMid slice"
+                      />
+                    ) : (
+                      <Text style={styles.resultAvatarText}>
+                        {item.fullName.charAt(0)}
+                      </Text>
+                    )}
                   </View>
                   <Text style={[styles.resultName, { color: colors.text }]}>
                     {item.fullName}
@@ -742,7 +755,7 @@ function PersonBox({
   const cx = x + w / 2;
   const avatarR = 24;
   const avatarCy = y + avatarR + 2;
-  const baseColor = person.gender === "male" ? "#4A90D9" : "#D96BA0";
+  const baseColor = person.gender === "male" ? colors.male : colors.female;
   const ringColor = isMe ? colors.success : isTruong ? colors.accent : null;
 
   return (
@@ -759,25 +772,48 @@ function PersonBox({
         />
       )}
 
-      <Circle
-        cx={cx}
-        cy={avatarCy}
-        r={avatarR}
-        fill={baseColor}
-        opacity={isDeceased ? 0.45 : 1}
-        onPress={onPress}
-      />
-      <SvgText
-        x={cx}
-        y={avatarCy + 6}
-        fontSize={18}
-        fontWeight="700"
-        fill="#fff"
-        textAnchor="middle"
-        onPress={onPress}
-      >
-        {person.fullName.charAt(0)}
-      </SvgText>
+      {person.photoUri ? (
+        <>
+          <Defs>
+            <ClipPath id={`clip-${person.id}`}>
+              <Circle cx={cx} cy={avatarCy} r={avatarR} />
+            </ClipPath>
+          </Defs>
+          <SvgImage
+            x={cx - avatarR}
+            y={avatarCy - avatarR}
+            width={avatarR * 2}
+            height={avatarR * 2}
+            href={person.photoUri}
+            preserveAspectRatio="xMidYMid slice"
+            clipPath={`url(#clip-${person.id})`}
+            opacity={isDeceased ? 0.45 : 1}
+            onPress={onPress}
+          />
+        </>
+      ) : (
+        <>
+          <Circle
+            cx={cx}
+            cy={avatarCy}
+            r={avatarR}
+            fill={baseColor}
+            opacity={isDeceased ? 0.45 : 1}
+            onPress={onPress}
+          />
+          <SvgText
+            x={cx}
+            y={avatarCy + 6}
+            fontSize={18}
+            fontWeight="700"
+            fill="#fff"
+            textAnchor="middle"
+            onPress={onPress}
+          >
+            {person.fullName.charAt(0)}
+          </SvgText>
+        </>
+      )}
 
       <Circle
         cx={cx + avatarR - 4}

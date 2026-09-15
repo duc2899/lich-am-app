@@ -16,9 +16,12 @@ type NewPersonInput = {
 type EditPersonInput = {
   fullName: string;
   gender: Gender;
+  photoUri?: string;
   birthDay?: number;
   birthMonth?: number;
   birthYear?: number;
+  deathDay?: number;
+  deathMonth?: number;
   deathYear?: number;
   phone?: string;
   occupation?: string;
@@ -118,9 +121,12 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
             ...p,
             fullName: data.fullName,
             gender: data.gender,
+            photoUri: data.photoUri,
             birthDay: data.birthDay,
             birthMonth: data.birthMonth,
             birthYear: data.birthYear,
+            deathDay: data.deathDay,
+            deathMonth: data.deathMonth,
             deathYear: data.deathYear,
             phone: data.phone,
             occupation: data.occupation,

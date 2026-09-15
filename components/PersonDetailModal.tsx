@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Modal,
   Pressable,
+  Image,
 } from "react-native";
 import { useMemo } from "react";
 import { Person, Family } from "../types/family";
@@ -43,10 +44,7 @@ function RelationRow({
       <View
         style={[
           styles.avatarSmall,
-          {
-            backgroundColor:
-              person.gender === "male" ? colors.male : colors.female,
-          },
+          { backgroundColor: person.gender === "male" ? "#4A90D9" : "#D96BA0" },
         ]}
       >
         <Text style={styles.avatarSmallText}>{person.fullName.charAt(0)}</Text>
@@ -103,6 +101,7 @@ export default function PersonDetailModal({
     age,
     isDeceased,
     zodiacChi,
+    westernZodiac,
     lunarDateLabel,
     sonCount,
     daughterCount,
@@ -115,6 +114,13 @@ export default function PersonDetailModal({
       ? `${String(person.birthDay).padStart(2, "0")}/${String(person.birthMonth).padStart(2, "0")}/${person.birthYear}`
       : person.birthYear
         ? String(person.birthYear)
+        : null;
+
+  const deathDateLabel =
+    person.deathDay && person.deathMonth && person.deathYear
+      ? `${String(person.deathDay).padStart(2, "0")}/${String(person.deathMonth).padStart(2, "0")}/${person.deathYear}`
+      : person.deathYear
+        ? String(person.deathYear)
         : null;
 
   const handleNavigate = (targetId: string) => {
@@ -158,19 +164,30 @@ export default function PersonDetailModal({
           <ScrollView showsVerticalScrollIndicator={false}>
             <View style={styles.headerBlock}>
               <View style={styles.avatarWrap}>
-                <View
-                  style={[
-                    styles.avatarLarge,
-                    {
-                      backgroundColor:
-                        person.gender === "male" ? colors.male : colors.female,
-                    },
-                  ]}
-                >
-                  <Text style={styles.avatarLargeText}>
-                    {person.fullName.charAt(0)}
-                  </Text>
-                </View>
+                {person.photoUri ? (
+                  <Image
+                    source={{ uri: person.photoUri }}
+                    style={styles.avatarLarge}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View
+                    style={[
+                      styles.avatarLarge,
+                      styles.avatarPlaceholder,
+                      {
+                        backgroundColor:
+                          person.gender === "male"
+                            ? colors.male
+                            : colors.female,
+                      },
+                    ]}
+                  >
+                    <Text style={styles.avatarLargeText}>
+                      {person.fullName.charAt(0)}
+                    </Text>
+                  </View>
+                )}
                 <View
                   style={[
                     styles.genderBadge,
@@ -268,48 +285,59 @@ export default function PersonDetailModal({
                     >
                       🎂 Sinh
                     </Text>
-                    {zodiacChi && (
+                    {(zodiacChi || westernZodiac) && (
                       <View style={styles.miniBadgeRow}>
-                        <View
-                          style={[
-                            styles.miniBadge,
-                            { backgroundColor: colors.danger + "22" },
-                          ]}
-                        >
-                          <Text
+                        {zodiacChi && (
+                          <View
                             style={[
-                              styles.miniBadgeText,
-                              { color: colors.danger },
+                              styles.miniBadge,
+                              { backgroundColor: colors.danger + "22" },
                             ]}
                           >
-                            Tuổi {zodiacChi}
-                          </Text>
-                        </View>
+                            <Text
+                              style={[
+                                styles.miniBadgeText,
+                                { color: colors.danger },
+                              ]}
+                            >
+                              Tuổi {zodiacChi}
+                            </Text>
+                          </View>
+                        )}
+                        {westernZodiac && (
+                          <View
+                            style={[
+                              styles.miniBadge,
+                              { backgroundColor: colors.primary + "22" },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.miniBadgeText,
+                                { color: colors.primary },
+                              ]}
+                            >
+                              {westernZodiac}
+                            </Text>
+                          </View>
+                        )}
                       </View>
                     )}
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: 6,
-                      }}
+                    <Text
+                      style={[styles.infoCardValue, { color: colors.text }]}
                     >
+                      {birthDateLabel}
+                    </Text>
+                    {lunarDateLabel && (
                       <Text
-                        style={[styles.infoCardValue, { color: colors.text }]}
+                        style={[
+                          styles.infoCardSub,
+                          { color: colors.textSecondary },
+                        ]}
                       >
-                        {birthDateLabel}
+                        {lunarDateLabel}
                       </Text>
-                      {lunarDateLabel && (
-                        <Text
-                          style={[
-                            styles.infoCardSub,
-                            { color: colors.textSecondary },
-                          ]}
-                        >
-                          {"(" + lunarDateLabel + ")"}
-                        </Text>
-                      )}
-                    </View>
+                    )}
                   </View>
                 )}
                 {age !== null && (
@@ -330,6 +358,16 @@ export default function PersonDetailModal({
                     <Text style={[styles.ageValue, { color: colors.text }]}>
                       {age} tuổi
                     </Text>
+                    {deathDateLabel && (
+                      <Text
+                        style={[
+                          styles.infoCardSub,
+                          { color: colors.textSecondary },
+                        ]}
+                      >
+                        Mất {deathDateLabel}
+                      </Text>
+                    )}
                   </View>
                 )}
               </View>
@@ -663,13 +701,8 @@ const styles = StyleSheet.create({
 
   headerBlock: { alignItems: "center", marginBottom: 16, marginTop: 4 },
   avatarWrap: { position: "relative", marginBottom: 10 },
-  avatarLarge: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  avatarLarge: { width: 76, height: 76, borderRadius: 38 },
+  avatarPlaceholder: { alignItems: "center", justifyContent: "center" },
   avatarLargeText: { color: "#fff", fontSize: 30, fontWeight: "700" },
   genderBadge: {
     position: "absolute",
@@ -704,7 +737,12 @@ const styles = StyleSheet.create({
   infoCardValue: { fontSize: 16, fontWeight: "700" },
   infoCardSub: { fontSize: 11, marginTop: 2 },
   ageValue: { fontSize: 20, fontWeight: "700" },
-  miniBadgeRow: { flexDirection: "row", marginBottom: 4 },
+  miniBadgeRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 4,
+    marginBottom: 4,
+  },
   miniBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 },
   miniBadgeText: { fontSize: 10, fontWeight: "700" },
 

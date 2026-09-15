@@ -2,6 +2,7 @@ import { Person, Family } from "../types/family";
 import { getPersonRelations, PersonRelations } from "./familyRelations";
 import { computeGenerations } from "./familyStatistics";
 import { getChiOfYear, solarToLunar } from "../constants/lunar";
+import { getWesternZodiacSign } from "./zodiacSign";
 
 export type InLawInfo = {
     person: Person;
@@ -14,6 +15,7 @@ export type PersonDetailInfo = {
     age: number | null; // tuổi hiện tại (nếu còn sống) hoặc hưởng thọ (nếu đã mất)
     isDeceased: boolean;
     zodiacChi: string | null; // con giáp, chỉ có nếu có birthYear
+    westernZodiac: string | null; // cung hoàng đạo, chỉ có nếu có đủ birthDay+birthMonth
     lunarDateLabel: string | null; // "24/02 âm lịch", chỉ có nếu có đủ birthDay+birthMonth+birthYear
     sonCount: number;
     daughterCount: number;
@@ -45,6 +47,8 @@ export function computePersonDetailInfo(
     }
 
     const zodiacChi = person?.birthYear ? getChiOfYear(person.birthYear) : null;
+    const westernZodiac =
+        person?.birthDay && person?.birthMonth ? getWesternZodiacSign(person.birthDay, person.birthMonth) : null;
 
     let lunarDateLabel: string | null = null;
     if (person?.birthDay && person?.birthMonth && person?.birthYear) {
@@ -92,6 +96,7 @@ export function computePersonDetailInfo(
         age,
         isDeceased: !!person?.deathYear,
         zodiacChi,
+        westernZodiac,
         lunarDateLabel,
         sonCount,
         daughterCount,

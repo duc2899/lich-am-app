@@ -36,7 +36,7 @@ export default function FamilyStatisticsView({ stats }: Props) {
       value: stats.maleCount,
       label: "Nam",
       percent: pct(stats.maleCount),
-      barColor: colors.male,
+      barColor: "#4A90D9",
     },
     {
       icon: "♀",
@@ -44,7 +44,7 @@ export default function FamilyStatisticsView({ stats }: Props) {
       value: stats.femaleCount,
       label: "Nữ",
       percent: pct(stats.femaleCount),
-      barColor: colors.female,
+      barColor: "#D96BA0",
     },
     {
       icon: "👰",
@@ -52,7 +52,7 @@ export default function FamilyStatisticsView({ stats }: Props) {
       value: stats.daughterInLawCount,
       label: "Con dâu",
       percent: pct(stats.daughterInLawCount),
-      barColor: colors.female,
+      barColor: "#D96BA0",
     },
     {
       icon: "🤵",
@@ -195,32 +195,25 @@ export default function FamilyStatisticsView({ stats }: Props) {
           <View
             style={[
               styles.genderBarSegment,
-              { flex: stats.maleCount || 0.001, backgroundColor: colors.male },
+              { flex: stats.maleCount || 0.001, backgroundColor: "#4A90D9" },
             ]}
           />
           <View
             style={[
               styles.genderBarSegment,
-              {
-                flex: stats.femaleCount || 0.001,
-                backgroundColor: colors.female,
-              },
+              { flex: stats.femaleCount || 0.001, backgroundColor: "#D96BA0" },
             ]}
           />
         </View>
         <View style={styles.genderLegendRow}>
           <View style={styles.genderLegendItem}>
-            <View
-              style={[styles.legendDot, { backgroundColor: colors.male }]}
-            />
+            <View style={[styles.legendDot, { backgroundColor: "#4A90D9" }]} />
             <Text style={[styles.legendText, { color: colors.text }]}>
               Nam — {stats.maleCount} người ({pct(stats.maleCount)}%)
             </Text>
           </View>
           <View style={styles.genderLegendItem}>
-            <View
-              style={[styles.legendDot, { backgroundColor: colors.female }]}
-            />
+            <View style={[styles.legendDot, { backgroundColor: "#D96BA0" }]} />
             <Text style={[styles.legendText, { color: colors.text }]}>
               Nữ — {stats.femaleCount} người ({pct(stats.femaleCount)}%)
             </Text>
@@ -274,6 +267,53 @@ export default function FamilyStatisticsView({ stats }: Props) {
           trước Tết
         </Text>
       </View>
+
+      <View style={[styles.section, { backgroundColor: colors.surface }]}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+          ♈ Cung hoàng đạo
+        </Text>
+        {stats.westernZodiacCounts.length === 0 ? (
+          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+            Chưa có dữ liệu (cần nhập cả Ngày + Tháng sinh)
+          </Text>
+        ) : (
+          (() => {
+            const maxCount = stats.westernZodiacCounts[0].count;
+            return stats.westernZodiacCounts.map((z) => (
+              <View key={z.sign} style={styles.genRow}>
+                <Text
+                  style={[styles.zodiacLabel, { color: colors.textSecondary }]}
+                >
+                  {z.sign}
+                </Text>
+                <View
+                  style={[
+                    styles.genBarTrack,
+                    { backgroundColor: colors.border },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.genBarFill,
+                      {
+                        width: `${(z.count / maxCount) * 100}%`,
+                        backgroundColor: colors.primary,
+                      },
+                    ]}
+                  />
+                </View>
+                <Text style={[styles.genCount, { color: colors.text }]}>
+                  {z.count}
+                </Text>
+              </View>
+            ));
+          })()
+        )}
+        <Text style={[styles.footnote, { color: colors.textSecondary }]}>
+          * Chỉ tính người đã nhập đủ Ngày + Tháng sinh (cung hoàng đạo không
+          phụ thuộc năm sinh)
+        </Text>
+      </View>
     </ScrollView>
   );
 }
@@ -313,7 +353,7 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 15, fontWeight: "700", marginBottom: 14 },
   genRow: { flexDirection: "row", alignItems: "center", marginBottom: 12 },
   genLabel: { width: 70, fontSize: 12 },
-  zodiacLabel: { width: 50, fontSize: 12 },
+  zodiacLabel: { width: 78, fontSize: 12 },
   genBarTrack: {
     flex: 1,
     height: 8,

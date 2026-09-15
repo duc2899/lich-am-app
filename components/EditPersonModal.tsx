@@ -10,7 +10,9 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 import { useFamilyStore } from "../store/familyStore";
 import { useToastStore } from "../store/toastStore";
 import { Gender, Person } from "../types/family";
@@ -32,9 +34,12 @@ export default function EditPersonModal({ visible, person, onClose }: Props) {
 
   const [fullName, setFullName] = useState("");
   const [gender, setGender] = useState<Gender>("male");
+  const [photoUri, setPhotoUri] = useState<string | undefined>(undefined);
   const [birthDay, setBirthDay] = useState("");
   const [birthMonth, setBirthMonth] = useState("");
   const [birthYear, setBirthYear] = useState("");
+  const [deathDay, setDeathDay] = useState("");
+  const [deathMonth, setDeathMonth] = useState("");
   const [deathYear, setDeathYear] = useState("");
   const [isDeceased, setIsDeceased] = useState(false);
   const [phone, setPhone] = useState("");
@@ -47,9 +52,12 @@ export default function EditPersonModal({ visible, person, onClose }: Props) {
     if (visible && person) {
       setFullName(person.fullName);
       setGender(person.gender);
+      setPhotoUri(person.photoUri);
       setBirthDay(person.birthDay ? String(person.birthDay) : "");
       setBirthMonth(person.birthMonth ? String(person.birthMonth) : "");
       setBirthYear(person.birthYear ? String(person.birthYear) : "");
+      setDeathDay(person.deathDay ? String(person.deathDay) : "");
+      setDeathMonth(person.deathMonth ? String(person.deathMonth) : "");
       setDeathYear(person.deathYear ? String(person.deathYear) : "");
       setIsDeceased(!!person.deathYear);
       setPhone(person.phone ?? "");
@@ -60,7 +68,22 @@ export default function EditPersonModal({ visible, person, onClose }: Props) {
     }
   }, [visible, person]);
 
-  const currentYear = new Date().getFullYear();
+  const handlePickImage = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      showToast("Cần cấp quyền truy cập thư viện ảnh", "warning");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+      allowsEditing: true,
+      aspect: [1, 1],
+    });
+    if (!result.canceled && result.assets.length > 0) {
+      setPhotoUri(result.assets[0].uri);
+    }
+  };
 
   const validate = (): boolean => {
     if (!fullName.trim()) {
@@ -75,8 +98,7 @@ export default function EditPersonModal({ visible, person, onClose }: Props) {
       return false;
     }
     if (isDeceased) {
-      const dy = Number(deathYear);
-      const deathError = validateDateParts("", "", deathYear, {
+      const deathError = validateDateParts(deathDay, deathMonth, deathYear, {
         yearRequired: true,
         fieldLabel: "mất",
       });
@@ -84,7 +106,7 @@ export default function EditPersonModal({ visible, person, onClose }: Props) {
         setError(deathError);
         return false;
       }
-      if (birthYear.trim() && dy < Number(birthYear)) {
+      if (birthYear.trim() && Number(deathYear) < Number(birthYear)) {
         setError("Năm mất phải sau năm sinh");
         return false;
       }
@@ -99,9 +121,13 @@ export default function EditPersonModal({ visible, person, onClose }: Props) {
     editPerson(person.id, {
       fullName: fullName.trim(),
       gender,
+      photoUri,
       birthDay: birthDay.trim() ? Number(birthDay) : undefined,
       birthMonth: birthMonth.trim() ? Number(birthMonth) : undefined,
       birthYear: birthYear.trim() ? Number(birthYear) : undefined,
+      deathDay: isDeceased && deathDay.trim() ? Number(deathDay) : undefined,
+      deathMonth:
+        isDeceased && deathMonth.trim() ? Number(deathMonth) : undefined,
       deathYear: isDeceased && deathYear.trim() ? Number(deathYear) : undefined,
       phone: phone.trim() || undefined,
       occupation: occupation.trim() || undefined,
@@ -133,6 +159,49 @@ export default function EditPersonModal({ visible, person, onClose }: Props) {
               <Text style={[styles.heading, { color: colors.text }]}>
                 Sửa thông tin
               </Text>
+
+              <TouchableOpacity
+                style={[
+                  styles.imagePicker,
+                  {
+                    borderColor: colors.border,
+                    backgroundColor: colors.background,
+                  },
+                ]}
+                onPress={handlePickImage}
+              >
+                {photoUri ? (
+                  <Image
+                    source={{ uri: photoUri }}
+                    style={styles.previewImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <>
+                    <Text style={styles.uploadIcon}>📷</Text>
+                    <Text
+                      style={[
+                        styles.uploadText,
+                        { color: colors.textSecondary },
+                      ]}
+                    >
+                      Chạm để chọn ảnh đại diện
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+              {photoUri && (
+                <TouchableOpacity
+                  onPress={() => setPhotoUri(undefined)}
+                  style={styles.removePhotoBtn}
+                >
+                  <Text
+                    style={[styles.removePhotoText, { color: colors.danger }]}
+                  >
+                    Xoá ảnh
+                  </Text>
+                </TouchableOpacity>
+              )}
 
               <TextInput
                 style={[
@@ -207,29 +276,26 @@ export default function EditPersonModal({ visible, person, onClose }: Props) {
               </View>
 
               {isDeceased && (
-                <>
-                  <Text style={[styles.label, { color: colors.textSecondary }]}>
-                    Năm mất
-                  </Text>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      {
-                        borderColor: colors.border,
-                        color: colors.text,
-                        backgroundColor: colors.surface,
-                      },
-                    ]}
-                    placeholder="vd: 2020"
-                    placeholderTextColor={colors.textSecondary}
-                    keyboardType="number-pad"
-                    value={deathYear}
-                    onChangeText={(v) => {
-                      setDeathYear(v);
-                      setError("");
-                    }}
-                  />
-                </>
+                <DateInputFields
+                  label="Ngày mất"
+                  yearRequired
+                  day={deathDay}
+                  month={deathMonth}
+                  year={deathYear}
+                  onChangeDay={(v) => {
+                    setDeathDay(v);
+                    setError("");
+                  }}
+                  onChangeMonth={(v) => {
+                    setDeathMonth(v);
+                    setError("");
+                  }}
+                  onChangeYear={(v) => {
+                    setDeathYear(v);
+                    setError("");
+                  }}
+                  hasError={!!error}
+                />
               )}
 
               <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -354,6 +420,23 @@ const styles = StyleSheet.create({
     maxHeight: "90%",
   },
   heading: { fontSize: 18, fontWeight: "700", marginBottom: 16 },
+  imagePicker: {
+    height: 130,
+    width: 130,
+    alignSelf: "center",
+    borderRadius: 65,
+    borderWidth: 1.5,
+    borderStyle: "dashed",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+    marginBottom: 8,
+  },
+  previewImage: { width: "100%", height: "100%" },
+  uploadIcon: { fontSize: 26, marginBottom: 6 },
+  uploadText: { fontSize: 11, textAlign: "center", paddingHorizontal: 8 },
+  removePhotoBtn: { alignSelf: "center", marginBottom: 16 },
+  removePhotoText: { fontSize: 12, fontWeight: "600" },
   sectionTitle: {
     fontSize: 14,
     fontWeight: "700",
