@@ -1,6 +1,6 @@
 import { ScrollView, View, Text, StyleSheet } from "react-native";
-import { FamilyStatistics } from "../utils/familyStatistics";
-import { useTheme } from "../context/ThemeContext";
+import { FamilyStatistics } from "@/utils/familyStatistics";
+import { useTheme } from "@/context/ThemeContext";
 
 type StatCard = {
   icon: string;
@@ -20,6 +20,12 @@ export default function FamilyStatisticsView({ stats }: Props) {
   const total = stats.totalMembers || 1; // tránh chia 0
 
   const pct = (n: number) => Math.round((n / total) * 100);
+  // % ly hôn tính riêng theo TỔNG SỐ CUỘC HÔN NHÂN (không phải tổng thành viên) vì đây là
+  // số liệu theo gia đình, không phải theo người -- dùng chung hàm pct() sẽ cho ra % sai nghĩa.
+  const divorcePercent =
+    stats.totalMarriagesCount > 0
+      ? Math.round((stats.divorcedCount / stats.totalMarriagesCount) * 100)
+      : 0;
 
   const cards: StatCard[] = [
     {
@@ -71,12 +77,20 @@ export default function FamilyStatisticsView({ stats }: Props) {
       barColor: "#D9364A",
     },
     {
-      icon: "💔",
+      icon: "🧍",
       iconBg: "#E5E5E5",
       value: stats.unmarriedCount,
       label: "Chưa kết hôn",
       percent: pct(stats.unmarriedCount),
       barColor: "#B0B0B0",
+    },
+    {
+      icon: "💔",
+      iconBg: "#FBE3EC",
+      value: stats.divorcedCount,
+      label: "Đã ly hôn",
+      percent: divorcePercent,
+      barColor: "#D9364A",
     },
     {
       icon: "🕯️",
@@ -85,6 +99,14 @@ export default function FamilyStatisticsView({ stats }: Props) {
       label: "Đã mất",
       percent: pct(stats.deceasedCount),
       barColor: "#888",
+    },
+    {
+      icon: "🤝",
+      iconBg: "#DCEBFB",
+      value: stats.adoptedCount,
+      label: "Con nuôi",
+      percent: pct(stats.adoptedCount),
+      barColor: "#4A90D9",
     },
     {
       icon: "👑",

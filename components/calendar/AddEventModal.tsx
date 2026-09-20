@@ -11,16 +11,13 @@ import {
   Platform,
   ScrollView,
 } from "react-native";
-import { useEventStore, CalendarType, RepeatType } from "../store/eventStore";
-import { solarToLunar, lunarToSolar } from "../constants/lunar";
-import {
-  EVENT_CATEGORIES,
-  EventCategoryKey,
-} from "../constants/eventCategories";
-import ToggleButton from "./ToggleButton";
-import DateInputFields from "./DateInputFields";
-import { useTheme } from "../context/ThemeContext";
-import { useToastStore } from "../store/toastStore";
+import { useEventStore, CalendarType, RepeatType } from "@store/eventStore";
+import { solarToLunar, lunarToSolar } from "@constants/lunar";
+import { EVENT_CATEGORIES, EventCategoryKey } from "@constants/eventCategories";
+import ToggleButton from "@components/shared/ToggleButton";
+import DateInputFields from "@components/shared/DateInputFields";
+import { useTheme } from "@context/ThemeContext";
+import { useToastStore } from "@store/toastStore";
 
 type DateParts = { day: number; month: number; year: number };
 

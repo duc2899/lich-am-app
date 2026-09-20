@@ -1,7 +1,8 @@
 import { useEffect, useRef } from "react";
 import { View, Text, StyleSheet, Animated, Platform } from "react-native";
 import { FullWindowOverlay } from "react-native-screens";
-import { useToastStore, ToastType } from "../store/toastStore";
+
+import { useToastStore, ToastType } from "@store/toastStore";
 
 const TOAST_CONFIG: Record<
   ToastType,

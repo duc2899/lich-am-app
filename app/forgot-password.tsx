@@ -8,10 +8,11 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { useRouter } from "expo-router";
-import { useToastStore } from "../store/toastStore";
-import { useTheme } from "../context/ThemeContext";
 import { StatusBar } from "expo-status-bar";
+import { useRouter } from "expo-router";
+
+import { useToastStore } from "@store/toastStore";
+import { useTheme } from "@context/ThemeContext";
 
 export default function ForgotPasswordScreen() {
   const { colors } = useTheme();

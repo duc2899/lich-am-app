@@ -7,7 +7,8 @@ import React, {
 } from "react";
 import { useColorScheme } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { LightColors, DarkColors, ThemeColors } from "../constants/colors";
+
+import { LightColors, DarkColors, ThemeColors } from "@constants/colors";
 
 export type ThemeMode = "light" | "dark" | "system";
 

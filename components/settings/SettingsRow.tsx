@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, Switch } from "react-native";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme } from "@context/ThemeContext";
 
 type Props = {
   label: string;

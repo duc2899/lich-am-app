@@ -27,6 +27,7 @@
   "devDependencies": {
     "@types/d3-hierarchy": "^3.1.7",
     "@types/react": "~19.1.10",
+    "babel-plugin-module-resolver": "^5.0.3",
     "typescript": "~5.9.2"
   },
   "scripts": {

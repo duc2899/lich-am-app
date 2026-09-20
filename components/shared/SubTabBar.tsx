@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme } from "@context/ThemeContext";
 
 type Tab = { key: string; label: string; icon?: string };
 

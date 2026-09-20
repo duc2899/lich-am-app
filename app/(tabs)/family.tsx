@@ -1,32 +1,31 @@
 import { useMemo, useState } from "react";
 import { View, Text, StyleSheet, Alert } from "react-native";
-import FamilyTreeView from "../../components/FamilyTreeView";
-import PersonDetailModal from "../../components/PersonDetailModal";
-import AddChildModal from "../../components/AddChildModal";
-import AddSpouseModal from "../../components/AddSpouseModal";
-import EditPersonModal from "../../components/EditPersonModal";
-import FamilyLegend from "../../components/FamilyLegend";
-import FamilyStartScreen from "../../components/FamilyStartScreen";
+
+import FamilyTreeView from "@components/family/FamilyTreeView";
+import PersonDetailModal from "@components/family/PersonDetailModal";
+import AddChildModal from "@components/family/AddChildModal";
+import AddSpouseModal from "@components/family/AddSpouseModal";
+import EditPersonModal from "@components/family/EditPersonModal";
+import FamilyLegend from "@components/family/FamilyLegend";
+import FamilyStartScreen from "@components/family/FamilyStartScreen";
 import {
   buildDisplayTree,
   collectExpandableFamilyIds,
   pruneCollapsedFamilies,
-} from "../../utils/familyTreeBuilder";
-import {
-  getPersonRelations,
-  PersonRelations,
-} from "../../utils/familyRelations";
-import { computeTruongLineage } from "../../utils/familyLineage";
-import { useFamilyStore } from "../../store/familyStore";
-import { useToastStore } from "../../store/toastStore";
-import { Person } from "../../types/family";
-import FamilyStatisticsView from "../../components/FamilyStatisticsView";
-import SubTabBar from "../../components/SubTabBar";
-import { computeFamilyStatistics } from "../../utils/familyStatistics";
-import MemoryGalleryView from "../../components/MemoryGalleryView";
-import KinshipLookupView from "../../components/KinshipLookupView";
+} from "@utils/familyTreeBuilder";
+import { getPersonRelations, PersonRelations } from "@utils/familyRelations";
+import { computeTruongLineage } from "@utils/familyLineage";
+import { useFamilyStore } from "@store/familyStore";
+import { useToastStore } from "@store/toastStore";
+import { Person } from "@/types/family";
+import FamilyStatisticsView from "@components/family/FamilyStatisticsView";
+import SubTabBar from "@/components/shared/SubTabBar";
+import { computeFamilyStatistics } from "@utils/familyStatistics";
+import MemoryGalleryView from "@components/family/memory/MemoryGalleryView";
+import KinshipLookupView from "@components/family/KinshipLookupView";
 
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme } from "@context/ThemeContext";
+import FadeInView from "@/components/shared/FadeInView";
 
 export default function FamilyScreen() {
   const { colors } = useTheme();
@@ -161,80 +160,82 @@ export default function FamilyScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <SubTabBar
-        tabs={[
-          { key: "stats", label: "Thống kê", icon: "📊" },
-          { key: "diagram", label: "Sơ đồ", icon: "🌳" },
-          { key: "gallery", label: "Trưng bày", icon: "🖼️" },
-          { key: "kinship", label: "Mối quan hệ", icon: "👨‍👩‍👧‍👦" },
-        ]}
-        activeKey={activeSubTab}
-        onChange={(key) =>
-          setActiveSubTab(key as "stats" | "diagram" | "gallery" | "kinship")
-        }
-      />
+    <FadeInView>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <SubTabBar
+          tabs={[
+            { key: "stats", label: "Thống kê", icon: "📊" },
+            { key: "diagram", label: "Sơ đồ", icon: "🌳" },
+            { key: "gallery", label: "Trưng bày", icon: "🖼️" },
+            { key: "kinship", label: "Mối quan hệ", icon: "👨‍👩‍👧‍👦" },
+          ]}
+          activeKey={activeSubTab}
+          onChange={(key) =>
+            setActiveSubTab(key as "stats" | "diagram" | "gallery" | "kinship")
+          }
+        />
 
-      {activeSubTab === "stats" ? (
-        <FamilyStatisticsView stats={statistics} />
-      ) : activeSubTab === "gallery" ? (
-        <MemoryGalleryView />
-      ) : activeSubTab === "kinship" ? (
-        <KinshipLookupView persons={persons} families={families} />
-      ) : (
-        <>
-          <FamilyTreeView
-            root={rootNode}
-            persons={persons}
-            onPersonPress={handlePersonPress}
-            truongIds={truongIds}
-            mePersonId={mePersonId}
-            expandableFamilyIds={expandableFamilyIds}
-            collapsedFamilyIds={collapsedFamilyIds}
-            onToggleCollapse={handleToggleCollapse}
-          />
-          <FamilyLegend />
-          <Text style={styles.hint}>Chụm 2 ngón tay để zoom</Text>
-        </>
-      )}
+        {activeSubTab === "stats" ? (
+          <FamilyStatisticsView stats={statistics} />
+        ) : activeSubTab === "gallery" ? (
+          <MemoryGalleryView />
+        ) : activeSubTab === "kinship" ? (
+          <KinshipLookupView persons={persons} families={families} />
+        ) : (
+          <>
+            <FamilyTreeView
+              root={rootNode}
+              persons={persons}
+              onPersonPress={handlePersonPress}
+              truongIds={truongIds}
+              mePersonId={mePersonId}
+              expandableFamilyIds={expandableFamilyIds}
+              collapsedFamilyIds={collapsedFamilyIds}
+              onToggleCollapse={handleToggleCollapse}
+            />
+            <FamilyLegend />
+            <Text style={styles.hint}>Chụm 2 ngón tay để zoom</Text>
+          </>
+        )}
 
-      <PersonDetailModal
-        person={selectedPerson}
-        persons={persons}
-        families={families}
-        rootPersonId={rootPersonId}
-        truongIds={truongIds}
-        mePersonId={mePersonId}
-        onClose={() => setSelectedPerson(null)}
-        onNavigateToPerson={handlePersonPress}
-        onAddSpouse={handleAddSpouseFromDetail}
-        onAddChild={(familyId) => {
-          setSelectedPerson(null);
-          setAddChildFamilyId(familyId);
-        }}
-        onEdit={handleEditFromDetail}
-        onDelete={handleDelete}
-        onToggleMe={handleToggleMe}
-      />
+        <PersonDetailModal
+          person={selectedPerson}
+          persons={persons}
+          families={families}
+          rootPersonId={rootPersonId}
+          truongIds={truongIds}
+          mePersonId={mePersonId}
+          onClose={() => setSelectedPerson(null)}
+          onNavigateToPerson={handlePersonPress}
+          onAddSpouse={handleAddSpouseFromDetail}
+          onAddChild={(familyId) => {
+            setSelectedPerson(null);
+            setAddChildFamilyId(familyId);
+          }}
+          onEdit={handleEditFromDetail}
+          onDelete={handleDelete}
+          onToggleMe={handleToggleMe}
+        />
 
-      <AddChildModal
-        visible={addChildFamilyId !== null}
-        familyId={addChildFamilyId}
-        onClose={() => setAddChildFamilyId(null)}
-      />
+        <AddChildModal
+          visible={addChildFamilyId !== null}
+          familyId={addChildFamilyId}
+          onClose={() => setAddChildFamilyId(null)}
+        />
 
-      <AddSpouseModal
-        visible={addSpousePerson !== null}
-        person={addSpousePerson}
-        onClose={() => setAddSpousePerson(null)}
-      />
+        <AddSpouseModal
+          visible={addSpousePerson !== null}
+          person={addSpousePerson}
+          onClose={() => setAddSpousePerson(null)}
+        />
 
-      <EditPersonModal
-        visible={editPerson !== null}
-        person={editPerson}
-        onClose={() => setEditPerson(null)}
-      />
-    </View>
+        <EditPersonModal
+          visible={editPerson !== null}
+          person={editPerson}
+          onClose={() => setEditPerson(null)}
+        />
+      </View>
+    </FadeInView>
   );
 }
 

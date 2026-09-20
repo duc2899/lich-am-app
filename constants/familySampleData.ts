@@ -1,4 +1,4 @@
-import { Person, Family } from "../types/family";
+import { Person, Family } from "@/types/family";
 
 // Cấu trúc mẫu 3 thế hệ, có rẽ nhánh:
 // Đời 1: Nguyễn Văn Ông + Trần Thị Bà -> 2 con (Cha, Cô)

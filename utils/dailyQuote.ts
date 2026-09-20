@@ -1,4 +1,4 @@
-import { QUOTES, QuoteItem } from "../constants/quotes";
+import { QUOTES, QuoteItem } from "@constants/quotes";
 
 function getDayOfYear(date: Date): number {
   const start = new Date(date.getFullYear(), 0, 0);

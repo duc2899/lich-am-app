@@ -10,9 +10,9 @@ import {
   TextInput,
   FlatList,
 } from "react-native";
-import { Person, Family } from "../types/family";
-import { lookupKinship } from "../utils/familyKinship";
-import { useTheme } from "../context/ThemeContext";
+import { Person, Family } from "@/types/family";
+import { lookupKinship } from "@utils/familyKinship";
+import { useTheme } from "@context/ThemeContext";
 
 type Props = {
   persons: Person[];

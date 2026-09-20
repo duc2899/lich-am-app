@@ -11,10 +11,10 @@ import {
   getMonthCanChi,
   getDayCanChi,
   getWeekdayName,
-} from "../constants/lunar";
-import { getCategoryByKey } from "../constants/eventCategories";
-import { EventItem } from "../store/eventStore";
-import { useTheme } from "../context/ThemeContext";
+} from "@constants/lunar";
+import { getCategoryByKey } from "@constants/eventCategories";
+import { EventItem } from "@store/eventStore";
+import { useTheme } from "@context/ThemeContext";
 
 export type DayInfo = {
   date: number;

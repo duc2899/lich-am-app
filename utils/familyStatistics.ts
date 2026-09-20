@@ -1,6 +1,6 @@
-import { Person, Family } from "../types/family";
+import { Person, Family } from "@/types/family";
 import { computeTruongLineage } from "./familyLineage";
-import { getChiOfYear } from "../constants/lunar";
+import { getChiOfYear } from "@/constants/lunar";
 import { getWesternZodiacSign } from "./zodiacSign";
 
 export type FamilyStatistics = {
@@ -13,6 +13,9 @@ export type FamilyStatistics = {
     unmarriedCount: number;
     deceasedCount: number;
     truongCount: number; // con trưởng (toàn bộ chuỗi trưởng qua các đời)
+    adoptedCount: number; // con nuôi
+    divorcedCount: number; // số cuộc hôn nhân đã ly hôn
+    totalMarriagesCount: number; // tổng số cuộc hôn nhân (đủ cả 2 vợ chồng) -- dùng để tính % ly hôn cho đúng
     generationCounts: { generation: number; count: number }[]; // đời 1, 2, 3... -> số người
     zodiacCounts: { chi: string; count: number }[]; // con giáp -> số người, sắp xếp giảm dần
     westernZodiacCounts: { sign: string; count: number }[]; // cung hoàng đạo -> số người
@@ -106,6 +109,9 @@ export function computeFamilyStatistics(
     const deceasedCount = persons.filter((p) => !!p.deathYear).length;
 
     const truongCount = rootPersonId ? computeTruongLineage(rootPersonId, persons, families).length : 0;
+    const adoptedCount = persons.filter((p) => p.isAdopted).length;
+    const divorcedCount = families.filter((f) => f.isDivorced).length;
+    const totalMarriagesCount = families.filter((f) => f.husbandId && f.wifeId).length;
 
     // Phân bố theo thế hệ
     const generationCounts: { generation: number; count: number }[] = [];
@@ -156,6 +162,9 @@ export function computeFamilyStatistics(
         unmarriedCount,
         deceasedCount,
         truongCount,
+        adoptedCount,
+        divorcedCount,
+        totalMarriagesCount,
         generationCounts,
         zodiacCounts,
         westernZodiacCounts,

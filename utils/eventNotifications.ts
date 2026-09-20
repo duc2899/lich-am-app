@@ -1,7 +1,8 @@
 import * as Notifications from "expo-notifications";
-import type { EventItem } from "../store/eventStore";
-import { getCategoryByKey } from "../constants/eventCategories";
-import { solarToLunar, lunarToSolar } from "../constants/lunar";
+
+import type { EventItem } from "@store/eventStore";
+import { getCategoryByKey } from "@constants/eventCategories";
+import { solarToLunar, lunarToSolar } from "@constants/lunar";
 
 const REMINDER_DAYS_BEFORE = 2;
 const NOTIFY_HOUR = 7; // 9h sáng

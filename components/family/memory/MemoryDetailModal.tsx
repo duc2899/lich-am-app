@@ -8,9 +8,10 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
-import { MemoryItem, useMemoryStore } from "../store/memoryStore";
-import { useToastStore } from "../store/toastStore";
-import { useTheme } from "../context/ThemeContext";
+
+import { MemoryItem, useMemoryStore } from "@store/memoryStore";
+import { useToastStore } from "@store/toastStore";
+import { useTheme } from "@context/ThemeContext";
 
 type Props = {
   item: MemoryItem | null;

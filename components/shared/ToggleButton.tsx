@@ -1,5 +1,5 @@
 import { TouchableOpacity, Text, StyleSheet } from "react-native";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme } from "@context/ThemeContext";
 
 type Props = {
   active: boolean;

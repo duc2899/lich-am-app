@@ -1,10 +1,11 @@
 import { create } from "zustand";
-import { EventCategoryKey } from "../constants/eventCategories";
+
+import { EventCategoryKey } from "@constants/eventCategories";
 import {
   scheduleSolarEventNotification,
   scheduleLunarEventNotification,
   cancelEventNotification,
-} from "../utils/eventNotifications";
+} from "@utils/eventNotifications";
 
 export type CalendarType = "solar" | "lunar";
 export type RepeatType = "yearly" | "once";

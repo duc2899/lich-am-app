@@ -12,6 +12,7 @@ export type Person = {
     deathDay?: number;
     deathMonth?: number;
     childOfFamilyId?: string; // thuộc gia đình nào với tư cách là con
+    isAdopted?: boolean; // là con nuôi trong gia đình childOfFamilyId (không phải con ruột)
     spouseInFamilyIds: string[]; // các gia đình mà người này là vợ/chồng
     phone?: string;
     occupation?: string;
@@ -24,4 +25,5 @@ export type Family = {
     husbandId?: string;
     wifeId?: string;
     childrenIds: string[]; // theo thứ tự sinh
+    isDivorced?: boolean; // 2 người đã kết hôn nhưng nay đã ly hôn -- vẫn giữ nguyên quan hệ con cái
 };

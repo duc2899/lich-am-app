@@ -1,4 +1,4 @@
-import { Person, Family } from "../types/family";
+import { Person, Family } from "@/types/family";
 
 /**
  * Tính chuỗi "trưởng" của dòng họ: người tạo cây gốc (đời 1) MẶC ĐỊNH là trưởng.

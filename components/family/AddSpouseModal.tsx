@@ -10,41 +10,41 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { useFamilyStore } from "../store/familyStore";
-import { useToastStore } from "../store/toastStore";
-import { Gender } from "../types/family";
-import ToggleButton from "./ToggleButton";
-import DateInputFields from "./DateInputFields";
-import { validateDateParts, parseDateParts } from "../utils/dateValidation";
-import { useTheme } from "../context/ThemeContext";
+import { useFamilyStore } from "@/store/familyStore";
+import { useToastStore } from "@store/toastStore";
+import { Gender, Person } from "@/types/family";
+import ToggleButton from "@components/shared/ToggleButton";
+import DateInputFields from "@components/shared/DateInputFields";
+import { validateDateParts, parseDateParts } from "@utils/dateValidation";
+import { useTheme } from "@context/ThemeContext";
 
 type Props = {
   visible: boolean;
-  familyId: string | null;
+  person: Person | null;
   onClose: () => void;
 };
 
-export default function AddChildModal({ visible, familyId, onClose }: Props) {
+export default function AddSpouseModal({ visible, person, onClose }: Props) {
   const { colors } = useTheme();
-  const addChildToFamily = useFamilyStore((s) => s.addChildToFamily);
+  const addSpouse = useFamilyStore((s) => s.addSpouse);
   const showToast = useToastStore((s) => s.showToast);
   const [fullName, setFullName] = useState("");
-  const [gender, setGender] = useState<Gender>("male");
+  const [gender, setGender] = useState<Gender>("female");
   const [birthDay, setBirthDay] = useState("");
   const [birthMonth, setBirthMonth] = useState("");
   const [birthYear, setBirthYear] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (visible) {
+    if (visible && person) {
       setFullName("");
-      setGender("male");
+      setGender(person.gender === "male" ? "female" : "male");
       setBirthDay("");
       setBirthMonth("");
       setBirthYear("");
       setError("");
     }
-  }, [visible]);
+  }, [visible, person]);
 
   const handleSave = () => {
     if (!fullName.trim()) {
@@ -59,21 +59,21 @@ export default function AddChildModal({ visible, familyId, onClose }: Props) {
       setError(dateError);
       return;
     }
-    if (!familyId) return;
+    if (!person) return;
 
     const { day, month, year } = parseDateParts(
       birthDay,
       birthMonth,
       birthYear,
     );
-    addChildToFamily(familyId, {
+    addSpouse(person.id, {
       fullName: fullName.trim(),
       gender,
       birthDay: day,
       birthMonth: month,
       birthYear: year,
     });
-    showToast(`Đã thêm "${fullName.trim()}" làm con`);
+    showToast(`Đã thêm "${fullName.trim()}" làm vợ/chồng`);
     onClose();
   };
 
@@ -95,7 +95,7 @@ export default function AddChildModal({ visible, familyId, onClose }: Props) {
             onPress={(e) => e.stopPropagation()}
           >
             <Text style={[styles.heading, { color: colors.text }]}>
-              Thêm con
+              Thêm {gender === "male" ? "chồng" : "vợ"} cho {person?.fullName ?? ""}
             </Text>
 
             <TextInput
@@ -121,12 +121,14 @@ export default function AddChildModal({ visible, familyId, onClose }: Props) {
             </Text>
             <View style={styles.toggleRow}>
               <ToggleButton
+                disabled={gender === "female"}
                 color={colors.male}
                 active={gender === "male"}
                 label="Nam ♂"
                 onPress={() => setGender("male")}
               />
               <ToggleButton
+                disabled={gender === "male"}
                 color={colors.female}
                 active={gender === "female"}
                 label="Nữ ♀"
@@ -190,7 +192,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   card: { borderTopLeftRadius: 16, borderTopRightRadius: 16, padding: 20 },
-  heading: { fontSize: 18, fontWeight: "700", marginBottom: 16 },
+  heading: { fontSize: 17, fontWeight: "700", marginBottom: 16 },
   input: {
     borderWidth: 1,
     borderRadius: 8,

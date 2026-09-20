@@ -4,11 +4,12 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Toast from "../components/Toast";
-import AppSplashScreen from "../components/AppSplashScreen";
-import OnboardingScreen from "../components/OnboardingScreen";
-import { ThemeProvider, useTheme } from "../context/ThemeContext";
-import { useEventStore } from "../store/eventStore";
+
+import Toast from "@components/shared/Toast";
+import AppSplashScreen from "@components/onboarding/AppSplashScreen";
+import OnboardingScreen from "@components/onboarding/OnboardingScreen";
+import { ThemeProvider, useTheme } from "@context/ThemeContext";
+import { useEventStore } from "@store/eventStore";
 
 const ONBOARDING_KEY = "hasSeenOnboarding";
 

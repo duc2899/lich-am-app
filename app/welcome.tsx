@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { useAuthStore } from "../store/authStore";
-import { useToastStore } from "../store/toastStore";
+
+import { useAuthStore } from "@store/authStore";
+import { useToastStore } from "@store/toastStore";
 
 export default function WelcomeScreen() {
   const router = useRouter();

@@ -22,14 +22,14 @@ import Svg, {
   Image as SvgImage,
   ClipPath,
 } from "react-native-svg";
-import { DisplayNode } from "../utils/familyTreeBuilder";
+import { DisplayNode } from "@/utils/familyTreeBuilder";
 import {
   computeFamilyTreeLayout,
   NODE_WIDTH,
   NODE_HEIGHT,
-} from "../utils/familyTreeLayout";
-import { Person } from "../types/family";
-import { useTheme } from "../context/ThemeContext";
+} from "@/utils/familyTreeLayout";
+import { Person } from "@/types/family";
+import { useTheme } from "@/context/ThemeContext";
 
 type Props = {
   root: DisplayNode;
@@ -501,6 +501,15 @@ export default function FamilyTreeView({
                         ty={spouseBoxY}
                       />
 
+                      <SvgText
+                        x={centerX}
+                        y={spouseBoxY - 8}
+                        fontSize={13}
+                        textAnchor="middle"
+                      >
+                        {marriage.isDivorced ? "💔" : "💍"}
+                      </SvgText>
+
                       {marriage.spouse && (
                         <PersonBox
                           x={centerX - NODE_WIDTH / 4}
@@ -549,7 +558,7 @@ export default function FamilyTreeView({
                     fontSize={13}
                     textAnchor="middle"
                   >
-                    💍
+                    {d.isDivorced ? "💔" : "💍"}
                   </SvgText>
 
                   <BranchConnector
@@ -684,24 +693,13 @@ export default function FamilyTreeView({
                       styles.resultAvatar,
                       {
                         backgroundColor:
-                          item.gender === "male" ? colors.male : colors.female,
+                          item.gender === "male" ? "#4A90D9" : "#D96BA0",
                       },
                     ]}
                   >
-                    {item.photoUri ? (
-                      <SvgImage
-                        x={0}
-                        y={0}
-                        width={36}
-                        height={36}
-                        href={item.photoUri}
-                        preserveAspectRatio="xMidYMid slice"
-                      />
-                    ) : (
-                      <Text style={styles.resultAvatarText}>
-                        {item.fullName.charAt(0)}
-                      </Text>
-                    )}
+                    <Text style={styles.resultAvatarText}>
+                      {item.fullName.charAt(0)}
+                    </Text>
                   </View>
                   <Text style={[styles.resultName, { color: colors.text }]}>
                     {item.fullName}
@@ -755,7 +753,7 @@ function PersonBox({
   const cx = x + w / 2;
   const avatarR = 24;
   const avatarCy = y + avatarR + 2;
-  const baseColor = person.gender === "male" ? colors.male : colors.female;
+  const baseColor = person.gender === "male" ? "#4A90D9" : "#D96BA0";
   const ringColor = isMe ? colors.success : isTruong ? colors.accent : null;
 
   return (
@@ -835,6 +833,29 @@ function PersonBox({
       >
         {person.gender === "male" ? "♂" : "♀"}
       </SvgText>
+
+      {person.isAdopted && (
+        <>
+          <Circle
+            cx={cx - avatarR + 4}
+            cy={avatarCy + avatarR - 4}
+            r={9}
+            fill={colors.surface}
+            stroke={colors.primary}
+            strokeWidth={1.5}
+            onPress={onPress}
+          />
+          <SvgText
+            x={cx - avatarR + 4}
+            y={avatarCy + avatarR - 1}
+            fontSize={9}
+            textAnchor="middle"
+            onPress={onPress}
+          >
+            🤝
+          </SvgText>
+        </>
+      )}
 
       <SvgText
         x={cx}

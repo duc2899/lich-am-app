@@ -13,13 +13,13 @@ import {
   Image,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { useFamilyStore } from "../store/familyStore";
-import { useToastStore } from "../store/toastStore";
-import { Gender, Person } from "../types/family";
-import ToggleButton from "./ToggleButton";
-import DateInputFields from "./DateInputFields";
-import { validateDateParts } from "../utils/dateValidation";
-import { useTheme } from "../context/ThemeContext";
+import { useFamilyStore } from "@store/familyStore";
+import { useToastStore } from "@store/toastStore";
+import { Gender, Person } from "@/types/family";
+import ToggleButton from "@components/shared/ToggleButton";
+import DateInputFields from "@components/shared/DateInputFields";
+import { validateDateParts } from "@utils/dateValidation";
+import { useTheme } from "@context/ThemeContext";
 
 type Props = {
   visible: boolean;
@@ -46,6 +46,7 @@ export default function EditPersonModal({ visible, person, onClose }: Props) {
   const [occupation, setOccupation] = useState("");
   const [currentAddress, setCurrentAddress] = useState("");
   const [note, setNote] = useState("");
+  const [isAdopted, setIsAdopted] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -64,6 +65,7 @@ export default function EditPersonModal({ visible, person, onClose }: Props) {
       setOccupation(person.occupation ?? "");
       setCurrentAddress(person.currentAddress ?? "");
       setNote(person.note ?? "");
+      setIsAdopted(!!person.isAdopted);
       setError("");
     }
   }, [visible, person]);
@@ -129,6 +131,7 @@ export default function EditPersonModal({ visible, person, onClose }: Props) {
       deathMonth:
         isDeceased && deathMonth.trim() ? Number(deathMonth) : undefined,
       deathYear: isDeceased && deathYear.trim() ? Number(deathYear) : undefined,
+      isAdopted: person.childOfFamilyId ? isAdopted : undefined,
       phone: phone.trim() || undefined,
       occupation: occupation.trim() || undefined,
       currentAddress: currentAddress.trim() || undefined,
@@ -236,6 +239,27 @@ export default function EditPersonModal({ visible, person, onClose }: Props) {
                   onPress={() => setGender("female")}
                 />
               </View>
+
+              {person?.childOfFamilyId && (
+                <>
+                  <Text style={[styles.label, { color: colors.textSecondary }]}>
+                    Quan hệ với bố/mẹ
+                  </Text>
+                  <View style={styles.toggleRow}>
+                    <ToggleButton
+                      active={!isAdopted}
+                      label="Con ruột"
+                      onPress={() => setIsAdopted(false)}
+                    />
+                    <ToggleButton
+                      active={isAdopted}
+                      label="Con nuôi"
+                      onPress={() => setIsAdopted(true)}
+                      color="#888"
+                    />
+                  </View>
+                </>
+              )}
 
               <DateInputFields
                 label="Ngày sinh"

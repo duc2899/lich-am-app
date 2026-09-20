@@ -1,4 +1,4 @@
-import { Person, Family } from "../types/family";
+import { Person, Family } from "@/types/family";
 
 type AncestorEntry = { depth: number; via?: string };
 

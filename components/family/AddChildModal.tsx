@@ -10,41 +10,43 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { useFamilyStore } from "../store/familyStore";
-import { useToastStore } from "../store/toastStore";
-import { Gender, Person } from "../types/family";
-import ToggleButton from "./ToggleButton";
-import DateInputFields from "./DateInputFields";
-import { validateDateParts, parseDateParts } from "../utils/dateValidation";
-import { useTheme } from "../context/ThemeContext";
+import { useFamilyStore } from "@store/familyStore";
+import { useToastStore } from "@store/toastStore";
+import { Gender } from "@/types/family";
+import ToggleButton from "@components/shared/ToggleButton";
+import DateInputFields from "@components/shared/DateInputFields";
+import { validateDateParts, parseDateParts } from "@utils/dateValidation";
+import { useTheme } from "@context/ThemeContext";
 
 type Props = {
   visible: boolean;
-  person: Person | null;
+  familyId: string | null;
   onClose: () => void;
 };
 
-export default function AddSpouseModal({ visible, person, onClose }: Props) {
+export default function AddChildModal({ visible, familyId, onClose }: Props) {
   const { colors } = useTheme();
-  const addSpouse = useFamilyStore((s) => s.addSpouse);
+  const addChildToFamily = useFamilyStore((s) => s.addChildToFamily);
   const showToast = useToastStore((s) => s.showToast);
   const [fullName, setFullName] = useState("");
-  const [gender, setGender] = useState<Gender>("female");
+  const [gender, setGender] = useState<Gender>("male");
   const [birthDay, setBirthDay] = useState("");
   const [birthMonth, setBirthMonth] = useState("");
   const [birthYear, setBirthYear] = useState("");
+  const [isAdopted, setIsAdopted] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (visible && person) {
+    if (visible) {
       setFullName("");
-      setGender(person.gender === "male" ? "female" : "male");
+      setGender("male");
       setBirthDay("");
       setBirthMonth("");
       setBirthYear("");
+      setIsAdopted(false);
       setError("");
     }
-  }, [visible, person]);
+  }, [visible]);
 
   const handleSave = () => {
     if (!fullName.trim()) {
@@ -59,21 +61,22 @@ export default function AddSpouseModal({ visible, person, onClose }: Props) {
       setError(dateError);
       return;
     }
-    if (!person) return;
+    if (!familyId) return;
 
     const { day, month, year } = parseDateParts(
       birthDay,
       birthMonth,
       birthYear,
     );
-    addSpouse(person.id, {
+    addChildToFamily(familyId, {
       fullName: fullName.trim(),
       gender,
       birthDay: day,
       birthMonth: month,
       birthYear: year,
+      isAdopted,
     });
-    showToast(`Đã thêm "${fullName.trim()}" làm vợ/chồng`);
+    showToast(`Đã thêm "${fullName.trim()}" làm con`);
     onClose();
   };
 
@@ -95,7 +98,7 @@ export default function AddSpouseModal({ visible, person, onClose }: Props) {
             onPress={(e) => e.stopPropagation()}
           >
             <Text style={[styles.heading, { color: colors.text }]}>
-              Thêm {gender === "male" ? "chồng" : "vợ"} cho {person?.fullName ?? ""}
+              Thêm con
             </Text>
 
             <TextInput
@@ -121,18 +124,31 @@ export default function AddSpouseModal({ visible, person, onClose }: Props) {
             </Text>
             <View style={styles.toggleRow}>
               <ToggleButton
-                disabled={gender === "female"}
-                color={colors.male}
                 active={gender === "male"}
                 label="Nam ♂"
                 onPress={() => setGender("male")}
               />
               <ToggleButton
-                disabled={gender === "male"}
-                color={colors.female}
                 active={gender === "female"}
                 label="Nữ ♀"
                 onPress={() => setGender("female")}
+              />
+            </View>
+
+            <Text style={[styles.label, { color: colors.textSecondary }]}>
+              Quan hệ
+            </Text>
+            <View style={styles.toggleRow}>
+              <ToggleButton
+                active={!isAdopted}
+                label="Con ruột"
+                onPress={() => setIsAdopted(false)}
+              />
+              <ToggleButton
+                active={isAdopted}
+                label="Con nuôi"
+                onPress={() => setIsAdopted(true)}
+                color="#888"
               />
             </View>
 
@@ -192,7 +208,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   card: { borderTopLeftRadius: 16, borderTopRightRadius: 16, padding: 20 },
-  heading: { fontSize: 17, fontWeight: "700", marginBottom: 16 },
+  heading: { fontSize: 18, fontWeight: "700", marginBottom: 16 },
   input: {
     borderWidth: 1,
     borderRadius: 8,

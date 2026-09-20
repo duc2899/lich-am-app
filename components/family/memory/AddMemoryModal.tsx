@@ -13,11 +13,12 @@ import {
   ScrollView,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { useMemoryStore, MemoryItem } from "../store/memoryStore";
-import { useToastStore } from "../store/toastStore";
-import { useTheme } from "../context/ThemeContext";
-import DateInputFields from "./DateInputFields";
-import { validateDateParts } from "../utils/dateValidation";
+
+import { useMemoryStore, MemoryItem } from "@store/memoryStore";
+import { useToastStore } from "@store/toastStore";
+import { useTheme } from "@context/ThemeContext";
+import DateInputFields from "@components/shared/DateInputFields";
+import { validateDateParts } from "@utils/dateValidation";
 
 type Props = {
   visible: boolean;

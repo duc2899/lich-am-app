@@ -8,14 +8,16 @@ import {
   ScrollView,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useEventStore } from "../../store/eventStore";
-import AddEventModal from "../../components/AddEventModal";
+
+import { useEventStore } from "@store/eventStore";
+import AddEventModal from "@components/calendar/AddEventModal";
 import {
   getCategoryByKey,
   EVENT_CATEGORIES,
   EventCategoryKey,
-} from "../../constants/eventCategories";
-import { useTheme } from "../../context/ThemeContext";
+} from "@constants/eventCategories";
+import { useTheme } from "@context/ThemeContext";
+import FadeInView from "@/components/shared/FadeInView";
 
 type FilterKey = "all" | EventCategoryKey;
 
@@ -42,130 +44,138 @@ export default function EventsScreen() {
   }, [events]);
 
   return (
-    <View
-      style={[
-        styles.container,
-        { backgroundColor: colors.background, paddingTop: insets.top },
-      ]}
-    >
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.filterScroll}
-        contentContainerStyle={styles.filterScrollContent}
+    <FadeInView>
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: colors.background, paddingTop: insets.top },
+        ]}
       >
-        <TouchableOpacity
-          style={[
-            styles.filterChip,
-            { backgroundColor: colors.surface, borderColor: "transparent" },
-            filter === "all" && { borderColor: colors.primary },
-          ]}
-          onPress={() => setFilter("all")}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.filterScroll}
+          contentContainerStyle={styles.filterScrollContent}
         >
-          <Text
+          <TouchableOpacity
             style={[
-              styles.filterLabel,
-              { color: colors.textSecondary },
-              filter === "all" && { color: colors.primary, fontWeight: "700" },
+              styles.filterChip,
+              { backgroundColor: colors.surface, borderColor: "transparent" },
+              filter === "all" && { borderColor: colors.primary },
             ]}
+            onPress={() => setFilter("all")}
           >
-            Tất cả ({events.length})
-          </Text>
-        </TouchableOpacity>
-        {EVENT_CATEGORIES.map((c) => {
-          const count = countByCategory.get(c.key) ?? 0;
-          return (
-            <TouchableOpacity
-              key={c.key}
+            <Text
               style={[
-                styles.filterChip,
-                { backgroundColor: colors.surface, borderColor: "transparent" },
-                filter === c.key && { borderColor: colors.primary },
+                styles.filterLabel,
+                { color: colors.textSecondary },
+                filter === "all" && {
+                  color: colors.primary,
+                  fontWeight: "700",
+                },
               ]}
-              onPress={() => setFilter(c.key)}
             >
-              <Text style={styles.filterIcon}>{c.icon}</Text>
-              <Text
+              Tất cả ({events.length})
+            </Text>
+          </TouchableOpacity>
+          {EVENT_CATEGORIES.map((c) => {
+            const count = countByCategory.get(c.key) ?? 0;
+            return (
+              <TouchableOpacity
+                key={c.key}
                 style={[
-                  styles.filterLabel,
-                  { color: colors.textSecondary },
-                  filter === c.key && {
-                    color: colors.primary,
-                    fontWeight: "700",
+                  styles.filterChip,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: "transparent",
                   },
+                  filter === c.key && { borderColor: colors.primary },
                 ]}
+                onPress={() => setFilter(c.key)}
               >
-                {c.label} ({count})
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-
-      <FlatList
-        data={filteredEvents}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        ListEmptyComponent={
-          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-            {filter === "all"
-              ? "Chưa có sự kiện nào. Bấm nút + để thêm."
-              : "Không có sự kiện nào thuộc loại này."}
-          </Text>
-        }
-        renderItem={({ item }) => {
-          const cat = getCategoryByKey(item.category);
-          const currentYear = new Date().getFullYear();
-          const age =
-            item.category === "birthday" ? currentYear - item.year : null;
-
-          return (
-            <View
-              style={[styles.eventCard, { backgroundColor: colors.surface }]}
-            >
-              <View
-                style={[
-                  styles.iconCircle,
-                  { backgroundColor: colors.background },
-                ]}
-              >
-                <Text style={styles.iconText}>{cat.icon}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.eventTitle, { color: colors.text }]}>
-                  {item.title}
-                  {age !== null && age >= 0 ? ` (${age} tuổi)` : ""}
-                </Text>
+                <Text style={styles.filterIcon}>{c.icon}</Text>
                 <Text
-                  style={[styles.eventSub, { color: colors.textSecondary }]}
+                  style={[
+                    styles.filterLabel,
+                    { color: colors.textSecondary },
+                    filter === c.key && {
+                      color: colors.primary,
+                      fontWeight: "700",
+                    },
+                  ]}
                 >
-                  {cat.label} · {item.day}/{item.month}/{item.year} (
-                  {item.calendarType === "lunar" ? "Âm lịch" : "Dương lịch"}
-                  {item.repeatType === "yearly"
-                    ? ", lặp hàng năm"
-                    : ", chỉ 1 lần"}
-                  )
-                </Text>
-              </View>
-              <TouchableOpacity onPress={() => removeEvent(item.id)}>
-                <Text style={[styles.deleteText, { color: colors.danger }]}>
-                  Xoá
+                  {c.label} ({count})
                 </Text>
               </TouchableOpacity>
-            </View>
-          );
-        }}
-      />
+            );
+          })}
+        </ScrollView>
 
-      <TouchableOpacity
-        style={[styles.fab, { backgroundColor: colors.primary }]}
-        onPress={() => setAddOpen(true)}
-      >
-        <Text style={styles.fabText}>+</Text>
-      </TouchableOpacity>
+        <FlatList
+          data={filteredEvents}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+              {filter === "all"
+                ? "Chưa có sự kiện nào. Bấm nút + để thêm."
+                : "Không có sự kiện nào thuộc loại này."}
+            </Text>
+          }
+          renderItem={({ item }) => {
+            const cat = getCategoryByKey(item.category);
+            const currentYear = new Date().getFullYear();
+            const age =
+              item.category === "birthday" ? currentYear - item.year : null;
 
-      <AddEventModal visible={addOpen} onClose={() => setAddOpen(false)} />
-    </View>
+            return (
+              <View
+                style={[styles.eventCard, { backgroundColor: colors.surface }]}
+              >
+                <View
+                  style={[
+                    styles.iconCircle,
+                    { backgroundColor: colors.background },
+                  ]}
+                >
+                  <Text style={styles.iconText}>{cat.icon}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.eventTitle, { color: colors.text }]}>
+                    {item.title}
+                    {age !== null && age >= 0 ? ` (${age} tuổi)` : ""}
+                  </Text>
+                  <Text
+                    style={[styles.eventSub, { color: colors.textSecondary }]}
+                  >
+                    {cat.label} · {item.day}/{item.month}/{item.year} (
+                    {item.calendarType === "lunar" ? "Âm lịch" : "Dương lịch"}
+                    {item.repeatType === "yearly"
+                      ? ", lặp hàng năm"
+                      : ", chỉ 1 lần"}
+                    )
+                  </Text>
+                </View>
+                <TouchableOpacity onPress={() => removeEvent(item.id)}>
+                  <Text style={[styles.deleteText, { color: colors.danger }]}>
+                    Xoá
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            );
+          }}
+        />
+
+        <TouchableOpacity
+          style={[styles.fab, { backgroundColor: colors.primary }]}
+          onPress={() => setAddOpen(true)}
+        >
+          <Text style={styles.fabText}>+</Text>
+        </TouchableOpacity>
+
+        <AddEventModal visible={addOpen} onClose={() => setAddOpen(false)} />
+      </View>
+    </FadeInView>
   );
 }
 

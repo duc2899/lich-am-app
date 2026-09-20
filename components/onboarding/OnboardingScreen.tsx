@@ -10,7 +10,8 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from "react-native";
-import SLIDES from "../constants/welcome";
+
+import SLIDES from "@constants/welcome";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 

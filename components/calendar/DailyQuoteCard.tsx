@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from "react-native";
-import { getQuoteOfTheDay } from "../utils/dailyQuote";
-import { useTheme } from "../context/ThemeContext";
+import { getQuoteOfTheDay } from "@utils/dailyQuote";
+import { useTheme } from "@context/ThemeContext";
 
 export default function DailyQuoteCard() {
   const { colors } = useTheme();

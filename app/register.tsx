@@ -11,10 +11,11 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useAuthStore } from "../store/authStore";
-import { useToastStore } from "../store/toastStore";
-import { useTheme } from "../context/ThemeContext";
 import { StatusBar } from "expo-status-bar";
+
+import { useAuthStore } from "@store/authStore";
+import { useToastStore } from "@store/toastStore";
+import { useTheme } from "@context/ThemeContext";
 
 type FieldError = {
   field?: "email" | "password" | "terms";

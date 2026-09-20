@@ -1,7 +1,7 @@
-import { Person, Family } from "../types/family";
+import { Person, Family } from "@/types/family";
 import { getPersonRelations, PersonRelations } from "./familyRelations";
 import { computeGenerations } from "./familyStatistics";
-import { getChiOfYear, solarToLunar } from "../constants/lunar";
+import { getChiOfYear, solarToLunar } from "@constants/lunar";
 import { getWesternZodiacSign } from "./zodiacSign";
 
 export type InLawInfo = {

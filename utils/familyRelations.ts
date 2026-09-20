@@ -1,4 +1,4 @@
-import { Person, Family } from "../types/family";
+import { Person, Family } from "@/types/family";
 
 export type PersonRelations = {
     father?: Person;

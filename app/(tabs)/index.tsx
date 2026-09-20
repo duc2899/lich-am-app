@@ -8,14 +8,16 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { solarToLunar } from "../../constants/lunar";
-import { getSolarFestival, getLunarFestival } from "../../constants/festivals";
-import DayDetailModal, { DayInfo } from "../../components/DayDetailModal";
-import AddEventModal from "../../components/AddEventModal";
-import DailyQuoteCard from "../../components/DailyQuoteCard";
-import MonthYearPickerModal from "../../components/MonthYearPickerModal";
-import { useEventStore } from "../../store/eventStore";
-import { useTheme } from "../../context/ThemeContext";
+
+import { solarToLunar } from "@constants/lunar";
+import { getSolarFestival, getLunarFestival } from "@constants/festivals";
+import DayDetailModal, { DayInfo } from "@components/calendar/DayDetailModal";
+import AddEventModal from "@components/calendar/AddEventModal";
+import DailyQuoteCard from "@components/calendar/DailyQuoteCard";
+import MonthYearPickerModal from "@components/calendar/MonthYearPickerModal";
+import { useEventStore } from "@store/eventStore";
+import { useTheme } from "@context/ThemeContext";
+import FadeInView from "@components/shared/FadeInView";
 
 const WEEKDAYS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 
@@ -127,185 +129,190 @@ export default function CalendarScreen() {
   };
 
   return (
-    <ScrollView
-      style={[
-        styles.container,
-        { backgroundColor: colors.background, paddingTop: insets.top },
-      ]}
-    >
-      <View style={styles.header}>
-        <TouchableOpacity onPress={goPrevMonth} style={styles.navBtn}>
-          <Text style={[styles.navText, { color: colors.text }]}>‹</Text>
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <TouchableOpacity
-            style={[styles.monthPicker, { backgroundColor: colors.surface }]}
-            onPress={() => setPickerOpen(true)}
-            activeOpacity={0.6}
-          >
-            <Text style={[styles.headerTitle, { color: colors.text }]}>
-              Tháng {month} - {year}
-            </Text>
-            <Ionicons
-              name="chevron-down"
-              size={16}
-              color={colors.textSecondary}
-              style={styles.monthPickerIcon}
-            />
+    <FadeInView>
+      <ScrollView
+        style={[
+          styles.container,
+          { backgroundColor: colors.background, paddingTop: insets.top },
+        ]}
+      >
+        <View style={styles.header}>
+          <TouchableOpacity onPress={goPrevMonth} style={styles.navBtn}>
+            <Text style={[styles.navText, { color: colors.text }]}>‹</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            onPress={goToToday}
-            style={[styles.todayBtn, { backgroundColor: colors.surface }]}
-          >
-            <Text style={[styles.todayBtnText, { color: colors.primary }]}>
-              Hôm nay
-            </Text>
-          </TouchableOpacity>
-        </View>
-        <TouchableOpacity onPress={goNextMonth} style={styles.navBtn}>
-          <Text style={[styles.navText, { color: colors.text }]}>›</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={[styles.weekRow, { borderColor: colors.border }]}>
-        {WEEKDAYS.map((wd) => (
-          <Text
-            key={wd}
-            style={[styles.weekDayText, { color: colors.textSecondary }]}
-          >
-            {wd}
-          </Text>
-        ))}
-      </View>
-
-      <View style={styles.grid}>
-        {Array.from({ length: firstDayOffset }).map((_, i) => (
-          <View
-            key={`empty-${i}`}
-            style={[styles.dayCell, { borderColor: colors.border }]}
-          />
-        ))}
-        {days.map((day) => {
-          const hasFestival = day.festivals.length > 0;
-          const hasEvent = day.matchedEvents.length > 0;
-          return (
+          <View style={styles.headerCenter}>
             <TouchableOpacity
-              key={day.date}
-              style={[
-                styles.dayCell,
-                { borderColor: colors.border },
-                day.isToday && {
-                  backgroundColor: colors.primary,
-                  borderRadius: 8,
-                },
-              ]}
-              onPress={() => setSelectedDay(day)}
+              style={[styles.monthPicker, { backgroundColor: colors.surface }]}
+              onPress={() => setPickerOpen(true)}
+              activeOpacity={0.6}
             >
-              <Text
-                style={[
-                  styles.dayText,
-                  { color: colors.text },
-                  day.isToday && { color: "#fff" },
-                  hasFestival &&
-                    !day.isToday && { color: colors.danger, fontWeight: "700" },
-                ]}
-              >
-                {day.date}
+              <Text style={[styles.headerTitle, { color: colors.text }]}>
+                Tháng {month} - {year}
               </Text>
-              <Text
-                style={[
-                  styles.lunarText,
-                  { color: colors.textSecondary },
-                  day.isToday && { color: "#fff" },
-                  day.isLeapMonth &&
-                    day.lunarDay === 1 && {
-                      color: colors.accent,
-                      fontWeight: "700",
-                    },
-                ]}
-              >
-                {renderLunarLabel(day)}
-              </Text>
-              <View style={styles.dotRow}>
-                {hasFestival && (
-                  <View
-                    style={[
-                      styles.festivalDot,
-                      { backgroundColor: colors.danger },
-                    ]}
-                  />
-                )}
-                {hasEvent && (
-                  <View
-                    style={[styles.eventDot, { backgroundColor: "#F5B400" }]}
-                  />
-                )}
-              </View>
+              <Ionicons
+                name="chevron-down"
+                size={16}
+                color={colors.textSecondary}
+                style={styles.monthPickerIcon}
+              />
             </TouchableOpacity>
-          );
-        })}
-      </View>
-
-      <View style={styles.legendRow}>
-        <View style={styles.legendItem}>
-          <View
-            style={[styles.festivalDot, { backgroundColor: colors.danger }]}
-          />
-          <Text style={[styles.legendText, { color: colors.textSecondary }]}>
-            Ngày lễ
-          </Text>
+            <TouchableOpacity
+              onPress={goToToday}
+              style={[styles.todayBtn, { backgroundColor: colors.surface }]}
+            >
+              <Text style={[styles.todayBtnText, { color: colors.primary }]}>
+                Hôm nay
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity onPress={goNextMonth} style={styles.navBtn}>
+            <Text style={[styles.navText, { color: colors.text }]}>›</Text>
+          </TouchableOpacity>
         </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.eventDot, { backgroundColor: "#F5B400" }]} />
-          <Text style={[styles.legendText, { color: colors.textSecondary }]}>
-            Có sự kiện
-          </Text>
+
+        <View style={[styles.weekRow, { borderColor: colors.border }]}>
+          {WEEKDAYS.map((wd) => (
+            <Text
+              key={wd}
+              style={[styles.weekDayText, { color: colors.textSecondary }]}
+            >
+              {wd}
+            </Text>
+          ))}
         </View>
-      </View>
 
-      <DailyQuoteCard />
+        <View style={styles.grid}>
+          {Array.from({ length: firstDayOffset }).map((_, i) => (
+            <View
+              key={`empty-${i}`}
+              style={[styles.dayCell, { borderColor: colors.border }]}
+            />
+          ))}
+          {days.map((day) => {
+            const hasFestival = day.festivals.length > 0;
+            const hasEvent = day.matchedEvents.length > 0;
+            return (
+              <TouchableOpacity
+                key={day.date}
+                style={[
+                  styles.dayCell,
+                  { borderColor: colors.border },
+                  day.isToday && {
+                    backgroundColor: colors.primary,
+                    borderRadius: 8,
+                  },
+                ]}
+                onPress={() => setSelectedDay(day)}
+              >
+                <Text
+                  style={[
+                    styles.dayText,
+                    { color: colors.text },
+                    day.isToday && { color: "#fff" },
+                    hasFestival &&
+                      !day.isToday && {
+                        color: colors.danger,
+                        fontWeight: "700",
+                      },
+                  ]}
+                >
+                  {day.date}
+                </Text>
+                <Text
+                  style={[
+                    styles.lunarText,
+                    { color: colors.textSecondary },
+                    day.isToday && { color: "#fff" },
+                    day.isLeapMonth &&
+                      day.lunarDay === 1 && {
+                        color: colors.accent,
+                        fontWeight: "700",
+                      },
+                  ]}
+                >
+                  {renderLunarLabel(day)}
+                </Text>
+                <View style={styles.dotRow}>
+                  {hasFestival && (
+                    <View
+                      style={[
+                        styles.festivalDot,
+                        { backgroundColor: colors.danger },
+                      ]}
+                    />
+                  )}
+                  {hasEvent && (
+                    <View
+                      style={[styles.eventDot, { backgroundColor: "#F5B400" }]}
+                    />
+                  )}
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
 
-      <DayDetailModal
-        day={selectedDay}
-        month={month}
-        year={year}
-        onClose={() => setSelectedDay(null)}
-        onAddEvent={() => {
-          setEventPrefillDay(selectedDay);
-          setSelectedDay(null);
-          setAddEventOpen(true);
-        }}
-      />
+        <View style={styles.legendRow}>
+          <View style={styles.legendItem}>
+            <View
+              style={[styles.festivalDot, { backgroundColor: colors.danger }]}
+            />
+            <Text style={[styles.legendText, { color: colors.textSecondary }]}>
+              Ngày lễ
+            </Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.eventDot, { backgroundColor: "#F5B400" }]} />
+            <Text style={[styles.legendText, { color: colors.textSecondary }]}>
+              Có sự kiện
+            </Text>
+          </View>
+        </View>
 
-      <AddEventModal
-        visible={addEventOpen}
-        onClose={() => setAddEventOpen(false)}
-        initialSolar={
-          eventPrefillDay
-            ? { day: eventPrefillDay.date, month, year }
-            : undefined
-        }
-        initialLunar={
-          eventPrefillDay
-            ? {
-                day: eventPrefillDay.lunarDay,
-                month: eventPrefillDay.lunarMonth,
-                year: eventPrefillDay.lunarYear,
-              }
-            : undefined
-        }
-      />
-      <MonthYearPickerModal
-        visible={pickerOpen}
-        month={month}
-        year={year}
-        onClose={() => setPickerOpen(false)}
-        onSelect={(m, y) => {
-          setMonth(m);
-          setYear(y);
-        }}
-      />
-    </ScrollView>
+        <DailyQuoteCard />
+
+        <DayDetailModal
+          day={selectedDay}
+          month={month}
+          year={year}
+          onClose={() => setSelectedDay(null)}
+          onAddEvent={() => {
+            setEventPrefillDay(selectedDay);
+            setSelectedDay(null);
+            setAddEventOpen(true);
+          }}
+        />
+
+        <AddEventModal
+          visible={addEventOpen}
+          onClose={() => setAddEventOpen(false)}
+          initialSolar={
+            eventPrefillDay
+              ? { day: eventPrefillDay.date, month, year }
+              : undefined
+          }
+          initialLunar={
+            eventPrefillDay
+              ? {
+                  day: eventPrefillDay.lunarDay,
+                  month: eventPrefillDay.lunarMonth,
+                  year: eventPrefillDay.lunarYear,
+                }
+              : undefined
+          }
+        />
+        <MonthYearPickerModal
+          visible={pickerOpen}
+          month={month}
+          year={year}
+          onClose={() => setPickerOpen(false)}
+          onSelect={(m, y) => {
+            setMonth(m);
+            setYear(y);
+          }}
+        />
+      </ScrollView>
+    </FadeInView>
   );
 }
 

@@ -1,16 +1,18 @@
-import { Person, Family } from "../types/family";
+import { Person, Family } from "@/types/family";
 
 // 1 nhánh hôn nhân trong trường hợp 1 người có từ 2 vợ/chồng trở lên
 export type Marriage = {
   familyId: string;
   spouse?: Person; // có thể chưa rõ (Family thiếu husbandId/wifeId)
   children: DisplayNode[];
+  isDivorced?: boolean;
 };
 
 export type DisplayNode = {
   id: string;
   husband?: Person;
   wife?: Person;
+  isDivorced?: boolean; // chỉ có ý nghĩa khi có husband/wife (1 cặp vợ chồng cụ thể)
   singlePerson?: Person;
   // Chỉ có giá trị khi 1 người có >= 2 cuộc hôn nhân -> hiển thị rẽ nhánh thay vì cặp đơn
   multiMarriage?: {
@@ -53,7 +55,7 @@ export function buildDisplayTree(
       const children = fam.childrenIds
         .map((cid) => buildPersonNode(cid))
         .filter((n): n is DisplayNode => n !== null);
-      marriages.push({ familyId: fam.id, spouse, children });
+      marriages.push({ familyId: fam.id, spouse, children, isDivorced: fam.isDivorced });
     }
 
     return { id: person.id, multiMarriage: { anchor: person, marriages }, children: [] };
@@ -70,7 +72,7 @@ export function buildDisplayTree(
       .map((cid) => buildPersonNode(cid))
       .filter((n): n is DisplayNode => n !== null);
 
-    return { id: family.id, husband, wife, children };
+    return { id: family.id, husband, wife, isDivorced: family.isDivorced, children };
   }
 
   // Gốc cây giờ là 1 NGƯỜI (không phải 1 Family cố định) -> tự xử lý đúng cả 3 trường hợp

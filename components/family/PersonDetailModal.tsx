@@ -9,9 +9,10 @@ import {
   Image,
 } from "react-native";
 import { useMemo } from "react";
-import { Person, Family } from "../types/family";
-import { computePersonDetailInfo } from "../utils/personDetailInfo";
-import { useTheme } from "../context/ThemeContext";
+import { Person, Family } from "@/types/family";
+import { computePersonDetailInfo } from "@utils/personDetailInfo";
+import { useTheme } from "@context/ThemeContext";
+import { useFamilyStore } from "@/store/familyStore";
 
 type Props = {
   person: Person | null;
@@ -82,6 +83,11 @@ export default function PersonDetailModal({
   onToggleMe,
 }: Props) {
   const { colors } = useTheme();
+  const setFamilyDivorced = useFamilyStore((s) => s.setFamilyDivorced);
+  const familyMap = useMemo(
+    () => new Map(families.map((f) => [f.id, f])),
+    [families],
+  );
 
   const info = useMemo(
     () =>
@@ -177,9 +183,7 @@ export default function PersonDetailModal({
                       styles.avatarPlaceholder,
                       {
                         backgroundColor:
-                          person.gender === "male"
-                            ? colors.male
-                            : colors.female,
+                          person.gender === "male" ? "#4A90D9" : "#D96BA0",
                       },
                     ]}
                   >
@@ -197,17 +201,7 @@ export default function PersonDetailModal({
                     },
                   ]}
                 >
-                  <Text
-                    style={[
-                      styles.genderBadgeText,
-                      {
-                        color:
-                          person.gender === "male"
-                            ? colors.male
-                            : colors.female,
-                      },
-                    ]}
-                  >
+                  <Text style={styles.genderBadgeText}>
                     {person.gender === "male" ? "♂" : "♀"}
                   </Text>
                 </View>
@@ -262,6 +256,18 @@ export default function PersonDetailModal({
                       ]}
                     >
                       🕯️ Đã mất
+                    </Text>
+                  </View>
+                )}
+                {person.isAdopted && (
+                  <View
+                    style={[
+                      styles.badge,
+                      { backgroundColor: colors.primary + "22" },
+                    ]}
+                  >
+                    <Text style={[styles.badgeText, { color: colors.primary }]}>
+                      🤝 Con nuôi
                     </Text>
                   </View>
                 )}
@@ -404,9 +410,7 @@ export default function PersonDetailModal({
                         { color: colors.textSecondary },
                       ]}
                     >
-                      <Text style={{ color: colors.text }}>♂</Text> {sonCount}{" "}
-                      <Text style={{ color: colors.text }}>♀</Text>{" "}
-                      {daughterCount}
+                      ♂ {sonCount} ♀ {daughterCount}
                     </Text>
                   </View>
                   {inLaws.length > 0 && (
@@ -555,32 +559,59 @@ export default function PersonDetailModal({
                   >
                     Vợ / Chồng
                   </Text>
-                  {spouseFamilyPairs.map(({ spouse, familyId }) => (
-                    <View key={spouse.id} style={styles.spouseRowWrap}>
-                      <View style={{ flex: 1 }}>
-                        <RelationRow
-                          person={spouse}
-                          onPress={() => handleNavigate(spouse.id)}
-                        />
-                      </View>
-                      <TouchableOpacity
-                        style={[
-                          styles.addChildInlineBtn,
-                          { backgroundColor: colors.background },
-                        ]}
-                        onPress={() => onAddChild(familyId)}
-                      >
-                        <Text
-                          style={[
-                            styles.addChildInlineText,
-                            { color: colors.primary },
-                          ]}
+                  {spouseFamilyPairs.map(({ spouse, familyId }) => {
+                    const isDivorced = !!familyMap.get(familyId)?.isDivorced;
+                    return (
+                      <View key={spouse.id}>
+                        <View style={styles.spouseRowWrap}>
+                          <View style={{ flex: 1 }}>
+                            <RelationRow
+                              person={spouse}
+                              subLabel={isDivorced ? "Đã ly hôn" : undefined}
+                              onPress={() => handleNavigate(spouse.id)}
+                            />
+                          </View>
+                          <TouchableOpacity
+                            style={[
+                              styles.addChildInlineBtn,
+                              { backgroundColor: colors.background },
+                            ]}
+                            onPress={() => onAddChild(familyId)}
+                          >
+                            <Text
+                              style={[
+                                styles.addChildInlineText,
+                                { color: colors.primary },
+                              ]}
+                            >
+                              + Con
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                        <TouchableOpacity
+                          style={styles.divorceToggleBtn}
+                          onPress={() =>
+                            setFamilyDivorced(familyId, !isDivorced)
+                          }
                         >
-                          + Con
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  ))}
+                          <Text
+                            style={[
+                              styles.divorceToggleText,
+                              {
+                                color: isDivorced
+                                  ? colors.success
+                                  : colors.danger,
+                              },
+                            ]}
+                          >
+                            {isDivorced
+                              ? "↺ Đánh dấu lại đang kết hôn"
+                              : "💔 Đánh dấu đã ly hôn"}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    );
+                  })}
                 </>
               )}
 
@@ -770,6 +801,12 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   spouseRowWrap: { flexDirection: "row", alignItems: "center", gap: 8 },
+  divorceToggleBtn: {
+    alignSelf: "flex-start",
+    marginBottom: 6,
+    marginLeft: 42,
+  },
+  divorceToggleText: { fontSize: 11, fontWeight: "600" },
   addChildInlineBtn: {
     paddingHorizontal: 10,
     paddingVertical: 6,

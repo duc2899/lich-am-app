@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { Person, Family, Gender } from "../types/family";
+import { Person, Family, Gender } from "@/types/family";
 
 function generateId(prefix: string): string {
   return `${prefix}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
@@ -11,6 +11,7 @@ type NewPersonInput = {
   birthDay?: number;
   birthMonth?: number;
   birthYear?: number;
+  isAdopted?: boolean; // chỉ có ý nghĩa khi dùng cho addChildToFamily
 };
 
 type EditPersonInput = {
@@ -23,6 +24,7 @@ type EditPersonInput = {
   deathDay?: number;
   deathMonth?: number;
   deathYear?: number;
+  isAdopted?: boolean;
   phone?: string;
   occupation?: string;
   currentAddress?: string;
@@ -41,6 +43,7 @@ type FamilyState = {
   setMePersonId: (personId: string | null) => void;
   deletePerson: (personId: string) => void;
   clearAll: () => void;
+  setFamilyDivorced: (familyId: string, isDivorced: boolean) => void;
 };
 
 export const useFamilyStore = create<FamilyState>((set, get) => ({
@@ -71,6 +74,7 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
       birthMonth: data.birthMonth,
       birthYear: data.birthYear,
       childOfFamilyId: familyId,
+      isAdopted: data.isAdopted || undefined,
       spouseInFamilyIds: [],
     };
     set((state) => ({
@@ -128,6 +132,7 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
             deathDay: data.deathDay,
             deathMonth: data.deathMonth,
             deathYear: data.deathYear,
+            isAdopted: data.isAdopted,
             phone: data.phone,
             occupation: data.occupation,
             currentAddress: data.currentAddress,
@@ -199,5 +204,11 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
 
   clearAll: () => {
     set({ persons: [], families: [], rootPersonId: null, mePersonId: null });
+  },
+
+  setFamilyDivorced: (familyId, isDivorced) => {
+    set((state) => ({
+      families: state.families.map((f) => (f.id === familyId ? { ...f, isDivorced } : f)),
+    }));
   },
 }));

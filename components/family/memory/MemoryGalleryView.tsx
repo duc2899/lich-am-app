@@ -8,10 +8,11 @@ import {
   ScrollView,
   Dimensions,
 } from "react-native";
-import { useMemoryStore, MemoryItem } from "../store/memoryStore";
+
+import { useMemoryStore, MemoryItem } from "@store/memoryStore";
 import AddMemoryModal from "./AddMemoryModal";
 import MemoryDetailModal from "./MemoryDetailModal";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme } from "@context/ThemeContext";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const GRID_GAP = 8;
