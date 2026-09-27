@@ -18,7 +18,7 @@ import { useToastStore } from "@store/toastStore";
 import { useTheme } from "@context/ThemeContext";
 
 type FieldError = {
-  field?: "email" | "password" | "terms";
+  field?: "email" | "password" | "terms" | "name";
   message: string;
 } | null;
 
@@ -48,6 +48,7 @@ export default function RegisterScreen() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [agreedTerms, setAgreedTerms] = useState(false);
   const [marketingOptIn, setMarketingOptIn] = useState(false);
@@ -65,7 +66,7 @@ export default function RegisterScreen() {
     );
   };
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     setError(null);
     if (!email.trim() || !email.includes("@")) {
       setError({ field: "email", message: "Email không hợp lệ" });
@@ -83,9 +84,17 @@ export default function RegisterScreen() {
       return;
     }
 
-    const result = register(email.trim(), password, marketingOptIn);
+    if (!name.trim()) {
+      setError({ field: "name", message: "Vui lòng nhập họ và tên" });
+      return;
+    }
+
+    const result = await register(email.trim(), password, name.trim());
     if (!result.success) {
-      setError({ field: "email", message: result.error ?? "Đăng ký thất bại" });
+      setError({
+        field: "email",
+        message: result.message ?? "Đăng ký thất bại",
+      });
       return;
     }
 
@@ -177,6 +186,34 @@ export default function RegisterScreen() {
             textContentType="emailAddress"
           />
           {error?.field === "email" && (
+            <Text style={[styles.errorText, { color: colors.danger }]}>
+              {error.message}
+            </Text>
+          )}
+
+          <TextInput
+            style={[
+              styles.input,
+              {
+                borderColor: colors.border,
+                color: colors.text,
+                backgroundColor: colors.surface,
+              },
+              error?.field === "name" && { borderColor: colors.danger },
+            ]}
+            placeholder="Họ và tên"
+            placeholderTextColor={colors.textSecondary}
+            value={name}
+            onChangeText={(v) => {
+              setName(v);
+              setError(null);
+            }}
+            keyboardType="default"
+            autoCapitalize="none"
+            autoComplete="email"
+            textContentType="emailAddress"
+          />
+          {error?.field === "name" && (
             <Text style={[styles.errorText, { color: colors.danger }]}>
               {error.message}
             </Text>

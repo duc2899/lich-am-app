@@ -18,15 +18,18 @@
     },
     "ios": {
       "bundleIdentifier": "com.lightd.lichamapp",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
+      }
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
     },
     "scheme": "lichamapp",
-    "plugins": [
-      "expo-router"
-    ],
+    "plugins": ["expo-router"],
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "backgroundColor": "#7A2E2E",
