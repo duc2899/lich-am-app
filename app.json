@@ -18,25 +18,18 @@
     },
     "ios": {
       "bundleIdentifier": "com.lightd.lichamapp",
-      "buildNumber": "1",
+      "supportsTablet": true,
       "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "Ứng dụng cần quyền truy cập thư viện ảnh để bạn chọn ảnh đại diện cho thành viên gia phả và thêm ảnh vào phòng trưng bày.",
-        "NSFaceIDUsageDescription": "Dùng Face ID để đăng nhập nhanh mà không cần nhập lại mật khẩu."
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
       }
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
     },
     "scheme": "lichamapp",
-    "plugins": [
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/images/splash-icon.png",
-          "color": "#7A2E2E"
-        }
-      ]
-    ],
+    "plugins": ["expo-router"],
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "backgroundColor": "#7A2E2E",

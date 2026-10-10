@@ -25,7 +25,7 @@ export default function LoginScreen() {
   const router = useRouter();
   const login = useAuthStore((s) => s.login);
   const loginWithBiometric = useAuthStore((s) => s.loginWithBiometric);
-  const lastAuthenticatedEmail = useAuthStore((s) => s.lastAuthenticatedEmail);
+  const lastAuthenticatedEmail = useAuthStore((s) => s.isHydrated);
   const showToast = useToastStore((s) => s.showToast);
 
   const [email, setEmail] = useState("");
@@ -33,7 +33,7 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<FieldError>(null);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setError(null);
     if (!email.trim()) {
       setError({ field: "email", message: "Vui lòng nhập email" });
@@ -44,16 +44,9 @@ export default function LoginScreen() {
       return;
     }
 
-    const result = login(email.trim(), password);
+    const result =await login(email.trim(), password);
     if (!result.success) {
-      if (result.error === "email_not_found") {
-        setError({ field: "email", message: "Email này chưa được đăng ký" });
-      } else {
-        setError({
-          field: "password",
-          message: "Sai mật khẩu, vui lòng thử lại",
-        });
-      }
+      showToast(result?.message || "Loi", "error")
       return;
     }
 
@@ -73,7 +66,7 @@ export default function LoginScreen() {
       cancelLabel: "Huỷ",
     });
     if (result.success) {
-      const loginResult = loginWithBiometric();
+      const loginResult = await loginWithBiometric();
       if (loginResult.success) {
         showToast("Đăng nhập bằng sinh trắc học thành công");
         router.back();

@@ -25,6 +25,7 @@ import {
   scheduleTestNotification,
 } from "@utils/eventNotifications";
 import FadeInView from "@/components/shared/FadeInView";
+import { checkServerConnection } from "@/api/healthApi";
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -134,6 +135,13 @@ export default function SettingsScreen() {
     }
   };
 
+  const handleTestServerConnection = async () => {
+    const result = await checkServerConnection();
+    console.log(result);
+    
+    showToast(result.message, result.success ? "success" : "error");
+  };
+
   return (
     <FadeInView>
       <ScrollView
@@ -217,6 +225,11 @@ export default function SettingsScreen() {
             label="Test thông báo (bắn sau 10 giây)"
             onPress={handleTestNotification}
             isLast
+          />
+          <SettingsRow
+            icon="🌐"
+            label="Test kết nối server"
+            onPress={handleTestServerConnection}
           />
         </SettingsSection>
 
